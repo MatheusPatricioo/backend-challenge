@@ -171,7 +171,10 @@ Para efetuar a criação do ambiente docker, partimos de algumas premissas:
 - [ ] Escrever um script "_`check_deploy.sh`_" que faz todas as validações implementadas como uma pipeline e determina se o código está pronto para produção.
 
 ## Suas Respostas, Dúvidas e Observações
-### Docker
+
+### Ambiente
+
+#### Docker
 ```bash
 docker compose up -d --build                                       # sobe a aplicação em localhost:8000
 docker compose exec app composer test                              # roda todos os testes (unitários e de feature)
@@ -181,14 +184,20 @@ docker compose exec -e XDEBUG_TRIGGER=1 app vendor/bin/phpunit     # roda os tes
 ```
 Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.sqlite3`.
 
-### Testes unitários
+#### Coleção do Postman
+A coleção em `docs/postman-api.json` não funcionava ao ser importada: as variáveis usavam a sintaxe do Insomnia (`{{ _.base_url }}`) em vez da do Postman (`{{base_url}}`), e as URLs terminavam com `/`, o que não corresponde às rotas do Slim nem à documentação em `docs/api-docs.pdf`. Corrigi as duas coisas.
+
+### Testes
+
+#### Correção dos testes unitários
 Ao rodar `composer test` foram apontados dois problemas:
-- **Aviso de `Deprecated` do PHPUnit:** o `composer.json` fixava a versão `9.5` (9.5.0), lançada antes do PHP 8.1 e incompatível com ele. Atualizei para `^9.6`, uma atualização menor, sem impacto nos testes existentes.
+- **Aviso de `Deprecated` do PHPUnit:** o `composer.json` fixava a versão `9.5` (9.5.0), lançada antes do PHP 8.1 e incompatível com ele. Atualizei para `^9.6`, uma atualização minor, sem impacto nos testes existentes.
+- **Teste `Hydrate by fetch` falhando:** o `Product::hydrateByFetch()` convertia o preço com `(int)`, descartando os centavos (99.99 virava 99). O teste estava correto e o erro era no código, que afetava também a API (`GET /products/{id}` retornava o preço truncado). Troquei o cast para `(float)`.
 
-- **Teste `Hydrate by fetch` falhando:** (mantém o seu texto como está)
-
-### Testes de feature
+#### Testes de feature
 Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta. Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, então o banco real nunca é alterado. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
 
-### Coleção do Postman
-A coleção em `docs/postman-api.json` não funcionava ao ser importada: as variáveis usavam a sintaxe do Insomnia (`{{ _.base_url }}`) em vez da do Postman (`{{base_url}}`), e as URLs terminavam com `/`, que não corresponde às rotas definidas no Slim. Corrigi as duas coisas.
+### Alterações
+
+#### Categorias
+- **Categoria errada na listagem (`blue trouser` como `phone`):** a query de `ProductService::getAll()` fazia o JOIN com `category` usando `pc.id` (o id da linha da tabela de ligação) em vez de `pc.cat_id`. Com isso, além das categorias erradas, a listagem retornava apenas 6 dos 18 produtos. Corrigi o JOIN e adicionei um teste de feature que reproduz o caso relatado.
