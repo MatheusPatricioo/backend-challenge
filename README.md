@@ -179,3 +179,7 @@ docker compose exec app composer migrate                           # executa as 
 docker compose exec app composer create-migration NomeDaMigration  # cria uma migration
 ```
 Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.sqlite3`.
+
+### Testes unitários
+Ao rodar `composer test` foram apontados dois problemas:
+- **Aviso de `Deprecated` do PHPUnit:** o `composer.json` fixava a versão `9.5` (9.5.0), lançada antes do PHP 8.1 e incompatível com ele. Atualizei para `^9.6`, uma atualização menor, sem impacto nos testes existentes.
