@@ -189,3 +189,6 @@ Ao rodar `composer test` foram apontados dois problemas:
 
 ### Testes de feature
 Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta. Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, então o banco real nunca é alterado. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
+
+### Coleção do Postman
+A coleção em `docs/postman-api.json` não funcionava ao ser importada: as variáveis usavam a sintaxe do Insomnia (`{{ _.base_url }}`) em vez da do Postman (`{{base_url}}`), e as URLs terminavam com `/`, que não corresponde às rotas definidas no Slim. Corrigi as duas coisas.
