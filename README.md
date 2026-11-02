@@ -171,4 +171,11 @@ Para efetuar a criação do ambiente docker, partimos de algumas premissas:
 - [ ] Escrever um script "_`check_deploy.sh`_" que faz todas as validações implementadas como uma pipeline e determina se o código está pronto para produção.
 
 ## Suas Respostas, Dúvidas e Observações
-_[Adicione  aqui suas respostas, dúvidas e observações]_
+### Docker
+```bash
+docker compose up -d --build                                       # sobe a aplicação em localhost:8000
+docker compose exec app composer test                              # roda os testes unitários
+docker compose exec app composer migrate                           # executa as migrations
+docker compose exec app composer create-migration NomeDaMigration  # cria uma migration
+```
+Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.sqlite3`.

@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/var/www/html
+    command: >
+      sh -c "composer install --no-interaction --prefer-dist
+      && if [ ! -f db/db.sqlite3 ]; then cp db/db-backup.sqlite3 db/db.sqlite3; fi
+      && php -S 0.0.0.0:8000 -t public"
