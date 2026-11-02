@@ -177,6 +177,7 @@ docker compose up -d --build                                       # sobe a apli
 docker compose exec app composer test                              # roda os testes unitários
 docker compose exec app composer migrate                           # executa as migrations
 docker compose exec app composer create-migration NomeDaMigration  # cria uma migration
+docker compose exec -e XDEBUG_TRIGGER=1 app vendor/bin/phpunit     # roda os testes com o Xdebug ativo
 ```
 Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.sqlite3`.
 

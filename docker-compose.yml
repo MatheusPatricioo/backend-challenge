@@ -5,6 +5,12 @@ services:
       - "8000:8000"
     volumes:
       - .:/var/www/html
+    environment:
+      XDEBUG_MODE: debug
+      XDEBUG_CONFIG: "client_host=host.docker.internal start_with_request=trigger"
+      PHP_IDE_CONFIG: "serverName=backend-challenge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: >
       sh -c "composer install --no-interaction --prefer-dist
       && if [ ! -f db/db.sqlite3 ]; then cp db/db-backup.sqlite3 db/db.sqlite3; fi
