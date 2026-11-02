@@ -174,7 +174,7 @@ Para efetuar a criação do ambiente docker, partimos de algumas premissas:
 ### Docker
 ```bash
 docker compose up -d --build                                       # sobe a aplicação em localhost:8000
-docker compose exec app composer test                              # roda os testes unitários
+docker compose exec app composer test                              # roda todos os testes (unitários e de feature)
 docker compose exec app composer migrate                           # executa as migrations
 docker compose exec app composer create-migration NomeDaMigration  # cria uma migration
 docker compose exec -e XDEBUG_TRIGGER=1 app vendor/bin/phpunit     # roda os testes com o Xdebug ativo
@@ -185,4 +185,7 @@ Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.s
 Ao rodar `composer test` foram apontados dois problemas:
 - **Aviso de `Deprecated` do PHPUnit:** o `composer.json` fixava a versão `9.5` (9.5.0), lançada antes do PHP 8.1 e incompatível com ele. Atualizei para `^9.6`, uma atualização menor, sem impacto nos testes existentes.
 
-- **Teste `Hydrate by fetch` falhando:** o `Product::hydrateByFetch()` convertia o preço com `(int)`, descartando os centavos (99.99 virava 99). O teste estava correto e o erro era no código, que afetava também a API (`GET /products/{id}` retornava o preço truncado). Troquei o cast para `(float)`.
+- **Teste `Hydrate by fetch` falhando:** (mantém o seu texto como está)
+
+### Testes de feature
+Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta. Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, então o banco real nunca é alterado. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
