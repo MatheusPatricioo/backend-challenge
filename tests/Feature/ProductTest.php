@@ -76,11 +76,64 @@ class ProductTest extends FeatureTestCase
         $this->assertSame(['phone'], array_column($product['categories'], 'title'));
     }
 
-    private function listProducts(int $adminUserId = 1): array
+    public function testListingProductsFiltersActiveProducts(): void
+    {
+        $activeId = ProductFactory::create(['active' => 1]);
+        $inactiveId = ProductFactory::create(['active' => 0]);
+
+        $listedIds = array_column($this->listProducts(query: ['active' => '1']), 'id');
+
+        $this->assertContains($activeId, $listedIds);
+        $this->assertNotContains($inactiveId, $listedIds);
+    }
+
+    public function testListingProductsFiltersInactiveProducts(): void
+    {
+        $activeId = ProductFactory::create(['active' => 1]);
+        $inactiveId = ProductFactory::create(['active' => 0]);
+
+        $listedIds = array_column($this->listProducts(query: ['active' => '0']), 'id');
+
+        $this->assertContains($inactiveId, $listedIds);
+        $this->assertNotContains($activeId, $listedIds);
+    }
+
+    public function testListingProductsFiltersByCategory(): void
+    {
+        $categoryId = CategoryFactory::create();
+        $productInCategoryId = ProductFactory::create(categoryIds: [$categoryId]);
+        $otherProductId = ProductFactory::create();
+
+        $listedIds = array_column($this->listProducts(query: ['category_id' => (string) $categoryId]), 'id');
+
+        $this->assertContains($productInCategoryId, $listedIds);
+        $this->assertNotContains($otherProductId, $listedIds);
+    }
+
+    public function testListingProductsSortsByOldestFirst(): void
+    {
+        $oldestId = ProductFactory::create(['created_at' => '2000-01-01 00:00:00']);
+
+        $listedIds = array_column($this->listProducts(query: ['sort' => 'created_at']), 'id');
+
+        $this->assertSame($oldestId, $listedIds[0]);
+    }
+
+    public function testListingProductsSortsByNewestFirst(): void
+    {
+        $newestId = ProductFactory::create(['created_at' => '2099-01-01 00:00:00']);
+
+        $listedIds = array_column($this->listProducts(query: ['sort' => '-created_at']), 'id');
+
+        $this->assertSame($newestId, $listedIds[0]);
+    }
+
+    private function listProducts(int $adminUserId = 1, array $query = []): array
     {
         $request = (new ServerRequestFactory())
             ->createServerRequest('GET', '/products')
-            ->withHeader('admin_user_id', (string) $adminUserId);
+            ->withHeader('admin_user_id', (string) $adminUserId)
+            ->withQueryParams($query);
 
         return json_decode((string) $this->app->handle($request)->getBody(), true);
     }

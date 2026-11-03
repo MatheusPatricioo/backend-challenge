@@ -2,6 +2,7 @@
 
 namespace Contatoseguro\TesteBackend\Service;
 
+use Contatoseguro\TesteBackend\Dto\ProductFilters;
 use Contatoseguro\TesteBackend\Repository\Contracts\AdminUserRepositoryInterface;
 use Contatoseguro\TesteBackend\Repository\Contracts\CategoryRepositoryInterface;
 use Contatoseguro\TesteBackend\Repository\Contracts\ProductLogRepositoryInterface;
@@ -17,11 +18,11 @@ class ProductService
     ) {
     }
 
-    public function getAll($adminUserId): array
+    public function getAll($adminUserId, ProductFilters $filters = new ProductFilters()): array
     {
         $companyId = $this->adminUserRepository->getCompanyId($adminUserId);
 
-        $products = $this->productRepository->getAll($companyId);
+        $products = $this->productRepository->getAll($companyId, $filters);
         $categoriesByProduct = $this->categoryRepository->getByProductIds(array_column($products, 'id'));
 
         foreach ($products as $product) {

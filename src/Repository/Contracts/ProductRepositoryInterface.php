@@ -2,9 +2,11 @@
 
 namespace Contatoseguro\TesteBackend\Repository\Contracts;
 
+use Contatoseguro\TesteBackend\Dto\ProductFilters;
+
 interface ProductRepositoryInterface
 {
-    public function getAll($companyId): array;
+    public function getAll($companyId, ProductFilters $filters = new ProductFilters()): array;
 
     public function getOne($id);
 

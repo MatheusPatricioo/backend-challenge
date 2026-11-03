@@ -3,6 +3,7 @@
 namespace Contatoseguro\TesteBackend\Controller;
 
 use Contatoseguro\TesteBackend\Config\DB;
+use Contatoseguro\TesteBackend\Dto\ProductFilters;
 use Contatoseguro\TesteBackend\Model\Product;
 use Contatoseguro\TesteBackend\Repository\AdminUserRepository;
 use Contatoseguro\TesteBackend\Repository\CategoryRepository;
@@ -35,7 +36,7 @@ class ProductController
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];
 
-        $products = $this->service->getAll($adminUserId);
+        $products = $this->service->getAll($adminUserId, ProductFilters::fromQueryParams($request->getQueryParams()));
         $response->getBody()->write(json_encode($products));
         return $response->withStatus(200);
     }

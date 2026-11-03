@@ -3,6 +3,7 @@
 namespace Contatoseguro\TesteBackend\Repository;
 
 use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
+use Contatoseguro\TesteBackend\Dto\ProductFilters;
 
 class ProductRepository implements ProductRepositoryInterface
 {
@@ -10,15 +11,27 @@ class ProductRepository implements ProductRepositoryInterface
     {
     }
 
-    public function getAll($companyId): array
+    public function getAll($companyId, ProductFilters $filters = new ProductFilters()): array
     {
-        $stm = $this->pdo->prepare('
+        $orderBy = match ($filters->sort) {
+            'created_at' => 'created_at, id',
+            '-created_at' => 'created_at DESC, id DESC',
+            default => 'id',
+        };
+
+        $stm = $this->pdo->prepare("
             SELECT *
             FROM product
             WHERE company_id = :company_id
-            ORDER BY id
-        ');
-        $stm->execute(['company_id' => $companyId]);
+              AND (:active IS NULL OR active = :active)
+              AND (:category_id IS NULL OR id IN (SELECT product_id FROM product_category WHERE cat_id = :category_id))
+            ORDER BY {$orderBy}
+        ");
+        $stm->execute([
+            'company_id' => $companyId,
+            'active' => $filters->active,
+            'category_id' => $filters->categoryId,
+        ]);
 
         return $stm->fetchAll();
     }
