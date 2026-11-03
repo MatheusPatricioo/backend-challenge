@@ -273,6 +273,7 @@ Repositories criados:
 - `ProductRepository`: tabelas `product` e `product_category`.
 - `ProductLogRepository`: tabela `product_log`.
 - `AdminUserRepository`: único ponto que resolve a empresa do usuário, antes repetido nos services.
+- - `CompanyRepository`: tabela `company`. O `CompanyController` fazia as queries diretamente, sem passar por um service.
 
 Além de eliminar o SQL injection, os prepared statements corrigiram dois erros: títulos com apóstrofo e registros com `"active": false`, que antes quebravam a query, passaram a ser salvos corretamente.
 

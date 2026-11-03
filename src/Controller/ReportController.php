@@ -11,6 +11,7 @@ use Contatoseguro\TesteBackend\Service\CompanyService;
 use Contatoseguro\TesteBackend\Service\ProductService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Contatoseguro\TesteBackend\Repository\CompanyRepository;
 
 class ReportController
 {
@@ -27,7 +28,7 @@ class ReportController
             new CategoryRepository($pdo),
             new AdminUserRepository($pdo)
         );
-        $this->companyService = new CompanyService();
+        $this->companyService = new CompanyService(new CompanyRepository($pdo));
     }
 
     public function generate(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -48,8 +49,7 @@ class ReportController
         $products = $this->productService->getAll($adminUserId);
 
         foreach ($products as $i => $product) {
-            $stm = $this->companyService->getNameById($product->company_id);
-            $companyName = $stm->fetch()->name;
+            $companyName = $this->companyService->getOne($product->company_id)->name;
 
             $productLogs = $this->productService->getLog($product->id);
 

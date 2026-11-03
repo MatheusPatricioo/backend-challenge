@@ -2,21 +2,21 @@
 
 namespace Contatoseguro\TesteBackend\Service;
 
-use Contatoseguro\TesteBackend\Config\DB;
+use Contatoseguro\TesteBackend\Repository\Contracts\CompanyRepositoryInterface;
 
 class CompanyService
 {
-    private \PDO $pdo;
-    public function __construct()
+    public function __construct(private CompanyRepositoryInterface $companyRepository)
     {
-        $this->pdo = DB::connect();
     }
 
-    public function getNameById($id)
+    public function getAll(): array
     {
-        $stm = $this->pdo->prepare("SELECT name FROM company WHERE id = {$id}");
-        $stm->execute();
-        
-        return $stm;
+        return $this->companyRepository->getAll();
+    }
+
+    public function getOne($id)
+    {
+        return $this->companyRepository->getOne($id);
     }
 }
