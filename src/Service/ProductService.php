@@ -11,19 +11,20 @@ use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
 class ProductService
 {
     public function __construct(
-        private ProductRepositoryInterface $productRepository,
+        private ProductRepositoryInterface    $productRepository,
         private ProductLogRepositoryInterface $productLogRepository,
-        private CategoryRepositoryInterface $categoryRepository,
-        private AdminUserRepositoryInterface $adminUserRepository
-    ) {
+        private CategoryRepositoryInterface   $categoryRepository,
+        private AdminUserRepositoryInterface  $adminUserRepository
+    )
+    {
     }
 
-    public function getAll($adminUserId, ProductFilters $filters = new ProductFilters()): array
+    public function getAll($adminUserId, ProductFilters $filters = new ProductFilters(), ?string $lang = null): array
     {
         $companyId = $this->adminUserRepository->getCompanyId($adminUserId);
 
         $products = $this->productRepository->getAll($companyId, $filters);
-        $categoriesByProduct = $this->categoryRepository->getByProductIds(array_column($products, 'id'));
+        $categoriesByProduct = $this->categoryRepository->getByProductIds(array_column($products, 'id'), $lang);
 
         foreach ($products as $product) {
             $product->categories = $categoriesByProduct[$product->id] ?? [];

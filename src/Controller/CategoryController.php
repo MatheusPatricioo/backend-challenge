@@ -23,7 +23,7 @@ class CategoryController
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];
 
-        $categories = $this->service->getAll($adminUserId);
+        $categories = $this->service->getAll($adminUserId, $request->getQueryParams()['lang'] ?? null);
         $response->getBody()->write(json_encode($categories));
         return $response->withStatus(200);
     }
@@ -31,7 +31,7 @@ class CategoryController
     public function getOne(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];
-        $category = $this->service->getOne($adminUserId, $args['id']);
+        $category = $this->service->getOne($adminUserId, $args['id'], $request->getQueryParams()['lang'] ?? null);
 
         $response->getBody()->write(json_encode($category));
         return $response->withStatus(200);
@@ -43,7 +43,7 @@ class CategoryController
         $adminUserId = $request->getHeader('admin_user_id')[0];
 
         if ($this->service->insertOne($body, $adminUserId)) {
-        return $response->withStatus(200);
+            return $response->withStatus(200);
         } else {
             return $response->withStatus(404);
         }

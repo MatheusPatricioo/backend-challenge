@@ -35,8 +35,9 @@ class ProductController
     public function getAll(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];
+        $query = $request->getQueryParams();
 
-        $products = $this->service->getAll($adminUserId, ProductFilters::fromQueryParams($request->getQueryParams()));
+        $products = $this->service->getAll($adminUserId, ProductFilters::fromQueryParams($query), $query['lang'] ?? null);
         $response->getBody()->write(json_encode($products));
         return $response->withStatus(200);
     }
@@ -45,7 +46,8 @@ class ProductController
     {
         $product = Product::hydrateByFetch($this->service->getOne($args['id']));
 
-        $product->setCategories($this->categoryService->getByProductIds([$product->id])[$product->id] ?? []);
+        $lang = $request->getQueryParams()['lang'] ?? null;
+        $product->setCategories($this->categoryService->getByProductIds([$product->id], $lang)[$product->id] ?? []);
 
         $response->getBody()->write(json_encode($product));
         return $response->withStatus(200);

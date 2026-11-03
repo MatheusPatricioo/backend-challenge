@@ -304,6 +304,17 @@ Migration `CreateCategoryTranslations`: cria a tabela `category_translation`, co
 - A rota segue o contrato definido pelo cliente (`POST /categories/:id`), embora uma rota como `POST /categories/:id/translations` fosse mais próxima do padrão REST.
 - Coberto por testes de feature.
 
+**Busca no idioma:** `GET /categories`, `GET /categories/{id}`, `GET /products` e `GET /products/{id}` aceitam o parâmetro opcional `lang` (por exemplo, `GET /products?lang=pt`). O campo `title` das categorias passa a vir na seguinte ordem de prioridade:
+
+1. a tradução no idioma pedido;
+2. se ela não existir, ou se `lang` não for informado, a tradução em inglês (`en`);
+3. se também não houver tradução em inglês, o título original da categoria, já que os títulos cadastrados estão em inglês.
+
+- A regra é resolvida na própria consulta: as traduções no idioma pedido e em inglês são unidas por `LEFT JOIN` e o `COALESCE` escolhe a primeira existente. Assim, as traduções chegam junto com as categorias, sem consultas extras por categoria (sem N+1).
+- O nome do campo continua sendo `title`, então os clientes atuais da API não precisam de alteração.
+- O relatório usa a regra padrão e exibe as categorias em inglês.
+- Coberto por testes de feature, um para cada regra e um para cada rota que aceita o parâmetro.
+
 ### Problemas encontrados
 
 Bugs que não foram apontados pelo cliente, mas que encontrei durante o desenvolvimento.

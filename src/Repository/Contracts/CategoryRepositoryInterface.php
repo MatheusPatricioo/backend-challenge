@@ -4,11 +4,11 @@ namespace Contatoseguro\TesteBackend\Repository\Contracts;
 
 interface CategoryRepositoryInterface
 {
-    public function getAll($companyId);
+    public function getAll($companyId, ?string $lang = null);
 
-    public function getOne($companyId, $categoryId);
+    public function getOne($companyId, $categoryId, ?string $lang = null);
 
-    public function getByProductIds(array $productIds): array;
+    public function getByProductIds(array $productIds, ?string $lang = null): array;
 
     public function insertOne($body, $companyId);
 
