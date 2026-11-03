@@ -25,6 +25,20 @@ class CommentController
         );
     }
 
+    public function getAll(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $adminUserId = $request->getHeader('admin_user_id')[0];
+
+        $comments = $this->service->getAll($adminUserId, (int) $args['id']);
+
+        if ($comments === null) {
+            return $response->withStatus(404);
+        }
+
+        $response->getBody()->write(json_encode($comments));
+        return $response->withStatus(200);
+    }
+
     public function insertOne(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];

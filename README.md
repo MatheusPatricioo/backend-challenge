@@ -330,6 +330,23 @@ Migration `CreateProductComments`: cria as tabelas `product_comment` (comentári
 
 - Coberto por testes de feature.
 
+**Listar em hierarquia:** `GET /products/{id}/comments` retorna os comentários do produto, cada um com as respostas aninhadas em `replies`, em qualquer profundidade:
+
+```json
+[
+  {
+    "id": 1, "parent_id": null, "user": "rivers", "content": "A bateria dura bem?", "created_at": "...",
+    "replies": [
+      { "id": 2, "parent_id": 1, "user": "kim", "content": "Dura o dia todo", "created_at": "...", "replies": [] }
+    ]
+  }
+]
+```
+
+- Uma única consulta busca todos os comentários do produto, e o `CommentService` monta a hierarquia em memória: as respostas de um comentário são os comentários cujo `parent_id` é o dele. Assim não há consultas por comentário (sem N+1).
+- Produto inexistente ou de outra empresa retorna `404 Not Found`.
+- Coberto por testes de feature.
+
 ### Problemas encontrados
 
 Bugs que não foram apontados pelo cliente, mas que encontrei durante o desenvolvimento.

@@ -69,4 +69,35 @@ class CommentTest extends FeatureTestCase
 
         return $stm->fetchAll(\PDO::FETCH_ASSOC);
     }
+
+    public function testListingCommentsNestsEachReplyUnderItsComment(): void
+    {
+        $productId = ProductFactory::create();
+        $commentId = CommentFactory::create(['product_id' => $productId, 'content' => 'Does the battery last?']);
+        $replyId = CommentFactory::create(['product_id' => $productId, 'parent_id' => $commentId, 'content' => 'All day']);
+        CommentFactory::create(['product_id' => $productId, 'parent_id' => $replyId, 'content' => 'Mine too']);
+
+        $comments = json_decode((string)$this->listComments($productId)->getBody(), true);
+
+        $this->assertCount(1, $comments);
+        $this->assertSame('Mine too', $comments[0]['replies'][0]['replies'][0]['content']);
+    }
+
+    public function testListingCommentsOfAProductOfAnotherCompanyReturnsNotFound(): void
+    {
+        $productId = ProductFactory::create(['company_id' => 2]);
+
+        $response = $this->listComments($productId);
+
+        $this->assertSame(404, $response->getStatusCode());
+    }
+
+    private function listComments(int $productId): ResponseInterface
+    {
+        $request = (new ServerRequestFactory())
+            ->createServerRequest('GET', "/products/{$productId}/comments")
+            ->withHeader('admin_user_id', '1');
+
+        return $this->app->handle($request);
+    }
 }

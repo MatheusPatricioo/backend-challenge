@@ -18,6 +18,20 @@ class CommentRepository implements CommentRepositoryInterface
         return $stm->fetch();
     }
 
+    public function getByProductId($productId): array
+    {
+        $stm = $this->pdo->prepare('
+            SELECT pc.id, pc.parent_id, au.name AS user, pc.content, pc.created_at
+            FROM product_comment pc
+            LEFT JOIN admin_user au ON au.id = pc.admin_user_id
+            WHERE pc.product_id = :product_id
+            ORDER BY pc.created_at, pc.id
+        ');
+        $stm->execute(['product_id' => $productId]);
+
+        return $stm->fetchAll();
+    }
+
     public function insertOne($productId, $adminUserId, $content, $parentId): int
     {
         $stm = $this->pdo->prepare('
@@ -31,6 +45,6 @@ class CommentRepository implements CommentRepositoryInterface
             'content' => $content,
         ]);
 
-        return (int) $this->pdo->lastInsertId();
+        return (int)$this->pdo->lastInsertId();
     }
 }

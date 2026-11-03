@@ -6,5 +6,7 @@ interface CommentRepositoryInterface
 {
     public function getOne($id);
 
+    public function getByProductId($productId): array;
+
     public function insertOne($productId, $adminUserId, $content, $parentId): int;
 }
