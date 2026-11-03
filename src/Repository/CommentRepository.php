@@ -21,7 +21,9 @@ class CommentRepository implements CommentRepositoryInterface
     public function getByProductId($productId): array
     {
         $stm = $this->pdo->prepare('
-            SELECT pc.id, pc.parent_id, au.name AS user, pc.content, pc.created_at
+            SELECT pc.id, pc.parent_id, au.name AS user,
+                CASE WHEN pc.deleted_at IS NULL THEN pc.content END AS content,
+                pc.created_at, pc.deleted_at
             FROM product_comment pc
             LEFT JOIN admin_user au ON au.id = pc.admin_user_id
             WHERE pc.product_id = :product_id
@@ -46,5 +48,19 @@ class CommentRepository implements CommentRepositoryInterface
         ]);
 
         return (int)$this->pdo->lastInsertId();
+    }
+
+    public function deleteOne($id, $adminUserId): bool
+    {
+        $stm = $this->pdo->prepare('
+            UPDATE product_comment
+            SET deleted_at = CURRENT_TIMESTAMP
+            WHERE id = :id
+            AND admin_user_id = :admin_user_id
+            AND deleted_at IS NULL
+        ');
+        $stm->execute(['id' => $id, 'admin_user_id' => $adminUserId]);
+
+        return $stm->rowCount() === 1;
     }
 }

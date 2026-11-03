@@ -36,4 +36,8 @@ $app->group('/categories', function (RouteCollectorProxy $group) {
     $group->delete('/{id}', [CategoryController::class, 'deleteOne']);
 });
 
+$app->group('/comments', function (RouteCollectorProxy $group) {
+    $group->delete('/{id}', [CommentController::class, 'deleteOne']);
+});
+
 $app->get('/report', [ReportController::class, 'generate']);

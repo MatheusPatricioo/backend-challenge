@@ -53,4 +53,15 @@ class CommentController
         $response->getBody()->write(json_encode(['id' => $commentId]));
         return $response->withStatus(201);
     }
+
+    public function deleteOne(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $adminUserId = $request->getHeader('admin_user_id')[0];
+
+        if (!$this->service->deleteOne($adminUserId, (int) $args['id'])) {
+            return $response->withStatus(404);
+        }
+
+        return $response->withStatus(204);
+    }
 }

@@ -92,10 +92,54 @@ class CommentTest extends FeatureTestCase
         $this->assertSame(404, $response->getStatusCode());
     }
 
+    public function testDeletingMyCommentHidesItsContent(): void
+    {
+        $productId = ProductFactory::create();
+        $commentId = CommentFactory::create(['product_id' => $productId, 'content' => 'Does the battery last?']);
+
+        $response = $this->deleteComment($commentId);
+
+        $comments = json_decode((string) $this->listComments($productId)->getBody(), true);
+        $this->assertSame(204, $response->getStatusCode());
+        $this->assertNull($comments[0]['content']);
+    }
+
+    public function testDeletingACommentKeepsItsReplies(): void
+    {
+        $productId = ProductFactory::create();
+        $commentId = CommentFactory::create(['product_id' => $productId]);
+        CommentFactory::create(['product_id' => $productId, 'parent_id' => $commentId, 'content' => 'All day']);
+
+        $this->deleteComment($commentId);
+
+        $comments = json_decode((string) $this->listComments($productId)->getBody(), true);
+        $this->assertSame('All day', $comments[0]['replies'][0]['content']);
+    }
+
+    public function testDeletingACommentOfAnotherUserReturnsNotFound(): void
+    {
+        $productId = ProductFactory::create();
+        $commentId = CommentFactory::create(['product_id' => $productId, 'admin_user_id' => 2, 'content' => 'Not yours']);
+
+        $response = $this->deleteComment($commentId);
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertSame(['Not yours'], array_column($this->commentsOf($productId), 'content'));
+    }
+
     private function listComments(int $productId): ResponseInterface
     {
         $request = (new ServerRequestFactory())
             ->createServerRequest('GET', "/products/{$productId}/comments")
+            ->withHeader('admin_user_id', '1');
+
+        return $this->app->handle($request);
+    }
+
+    private function deleteComment(int $commentId): ResponseInterface
+    {
+        $request = (new ServerRequestFactory())
+            ->createServerRequest('DELETE', "/comments/{$commentId}")
             ->withHeader('admin_user_id', '1');
 
         return $this->app->handle($request);

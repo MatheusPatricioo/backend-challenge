@@ -303,6 +303,7 @@ Migration `CreateCategoryTranslations`: cria a tabela `category_translation`, co
 - A regra de não repetir é garantida pelo banco, com um índice único em `(category_id, lang_code)`. As traduções são inseridas em uma transação: se qualquer uma for recusada, o `rollback` desfaz as demais.
 - As categorias padrão também podem ser traduzidas, já que o próprio exemplo do enunciado (`home`/`casa`) corresponde à categoria padrão `house`.
 - A rota segue o contrato definido pelo cliente (`POST /categories/:id`), embora uma rota como `POST /categories/:id/translations` fosse mais próxima do padrão REST.
+- **Observação:** a chave estrangeira de `category_translation` foi declarada com `ON DELETE CASCADE`, mas o SQLite só aplica chaves estrangeiras quando `PRAGMA foreign_keys` está ativado, o que não acontece neste projeto (ativar quebraria dados já existentes, como logs de um usuário inexistente). Na prática, ao remover uma categoria, as traduções dela permanecem no banco, sem afetar as respostas da API. Com uma migração para MySQL ou PostgreSQL, a remoção em cascata passa a funcionar.
 - Coberto por testes de feature.
 
 **Busca no idioma:** `GET /categories`, `GET /categories/{id}`, `GET /products` e `GET /products/{id}` aceitam o parâmetro opcional `lang` (por exemplo, `GET /products?lang=pt`). O campo `title` das categorias passa a vir na seguinte ordem de prioridade:
@@ -328,6 +329,18 @@ Migration `CreateProductComments`: cria as tabelas `product_comment` (comentári
 | Produto inexistente ou de outra empresa | `404 Not Found` |
 | `parent_id` inexistente ou de outro produto | `404 Not Found` |
 
+- Coberto por testes de feature.
+
+**Remover o próprio comentário:** `DELETE /comments/{id}`.
+
+| Situação | Resposta |
+|---|---|
+| Comentário removido | `204 No Content` |
+| Comentário inexistente, já removido ou de outro usuário | `404 Not Found` |
+
+- **Soft delete:** o comentário é marcado com `deleted_at` em vez de ser apagado, e na listagem aparece com `content` nulo. Assim as respostas de outros usuários continuam na conversa, já que o usuário só pode remover o que é seu.
+- A verificação de autoria é feita na própria consulta (`WHERE id = :id AND admin_user_id = :admin_user_id`), em uma única operação.
+- **Decisão:** um comentário de outro usuário retorna `404`, e não `403`, para não revelar quais comentários existem a quem não pode removê-los.
 - Coberto por testes de feature.
 
 **Listar em hierarquia:** `GET /products/{id}/comments` retorna os comentários do produto, cada um com as respostas aninhadas em `replies`, em qualquer profundidade:

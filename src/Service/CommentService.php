@@ -9,11 +9,19 @@ use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
 class CommentService
 {
     public function __construct(
-        private CommentRepositoryInterface   $commentRepository,
-        private ProductRepositoryInterface   $productRepository,
+        private CommentRepositoryInterface $commentRepository,
+        private ProductRepositoryInterface $productRepository,
         private AdminUserRepositoryInterface $adminUserRepository
-    )
+    ) {
+    }
+
+    public function getAll($adminUserId, int $productId): ?array
     {
+        if (!$this->productBelongsToUser($adminUserId, $productId)) {
+            return null;
+        }
+
+        return $this->buildHierarchy($this->commentRepository->getByProductId($productId));
     }
 
     public function insertOne($adminUserId, int $productId, string $content, ?int $parentId): ?int
@@ -29,13 +37,9 @@ class CommentService
         return $this->commentRepository->insertOne($productId, $adminUserId, $content, $parentId);
     }
 
-    public function getAll($adminUserId, int $productId): ?array
+    public function deleteOne($adminUserId, int $commentId): bool
     {
-        if (!$this->productBelongsToUser($adminUserId, $productId)) {
-            return null;
-        }
-
-        return $this->buildHierarchy($this->commentRepository->getByProductId($productId));
+        return $this->commentRepository->deleteOne($commentId, $adminUserId);
     }
 
     private function productBelongsToUser($adminUserId, int $productId): bool
@@ -54,7 +58,7 @@ class CommentService
 
     private function buildHierarchy(array $allComments, ?int $parentId = null): array
     {
-        $comments = array_values(array_filter($allComments, fn($comment) => $comment->parent_id === $parentId));
+        $comments = array_values(array_filter($allComments, fn ($comment) => $comment->parent_id === $parentId));
 
         foreach ($comments as $comment) {
             $comment->replies = $this->buildHierarchy($allComments, $comment->id);
