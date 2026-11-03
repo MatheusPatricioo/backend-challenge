@@ -50,4 +50,14 @@ class ReportTest extends FeatureTestCase
 
         return (string) $this->app->handle($request)->getBody();
     }
+
+    public function testReportEscapesHtmlInCategoryTitles(): void
+    {
+        $title = '<script>alert(1)</script>';
+        $this->createProductWithCategories([$title]);
+
+        $report = $this->generateReport();
+
+        $this->assertStringContainsString(htmlspecialchars($title), $report);
+    }
 }

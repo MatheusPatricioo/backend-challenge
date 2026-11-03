@@ -10,7 +10,7 @@ class HtmlTable
         foreach ($rows as $row) {
             $html .= "<tr>";
             foreach ($row as $column) {
-                $html .= "<td>{$column}</td>";
+                $html .= "<td>" . htmlspecialchars($column) . "</td>";
             }
             $html .= "</tr>";
         }

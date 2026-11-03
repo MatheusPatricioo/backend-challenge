@@ -245,6 +245,11 @@ Os métodos citados nesta seção se referem ao código no momento de cada corre
 - **Solução:** os logs passaram a ser exibidos no formato pedido, `(Nome do usuário, Tipo de alteração, Data)`, um por linha e em ordem cronológica. As ações são traduzidas (`create` → Criação, `update` → Atualização, `delete` → Remoção) e a data é exibida em `dd/mm/aaaa hh:mm:ss`. Coberto por testes de feature.
 - **Decisão:** logs de usuários inexistentes (como o usuário 6, presente nos dados) aparecem como `Usuário desconhecido`, em vez de sumirem do relatório.
 
+**Relatório vulnerável a XSS** *(encontrado durante a investigação)*
+- **Problema:** valores cadastrados pelos usuários, como títulos de produtos e categorias, eram inseridos no HTML do relatório sem tratamento. Um título como `<script>alert(1)</script>` seria executado no navegador de quem abrisse o relatório.
+- **Causa:** a tabela concatenava os valores diretamente nas células.
+- **Solução:** todas as células passaram a ser escapadas com `htmlspecialchars()` na `HtmlTable`, que concentra a geração do HTML. Coberto por teste de feature.
+
 #### Logs
 **Quem alterou o preço do `iphone 8` por último?**
 
