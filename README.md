@@ -283,7 +283,7 @@ Repositories criados:
 - `AdminUserRepository`: único ponto que resolve a empresa do usuário, antes repetido nos services.
 - `CompanyRepository`: tabela `company`. O `CompanyController` fazia as queries diretamente, sem passar por um service.
 
-Além de eliminar o SQL injection, os prepared statements corrigiram dois erros: títulos com apóstrofo e registros com `"active": false`, que antes quebravam a query, passaram a ser salvos corretamente.
+Além de eliminar o SQL injection (coberto por teste de feature), os prepared statements corrigiram dois erros: títulos com apóstrofo e registros com `"active": false`, que antes quebravam a query, passaram a ser salvos corretamente.
 
 **Interfaces apenas nos repositories:** os services recebem os repositories pelo construtor e dependem das suas interfaces (`src/Repository/Contracts`), não das implementações. Isso isola as regras de negócio do banco de dados: é possível trocar o banco (um dos desafios propostos) ou testar um service com um repository falso sem alterá-lo. Não criei interfaces para os services porque eles têm uma única implementação e não há cenário de substituição, então a abstração não traria benefício.
 

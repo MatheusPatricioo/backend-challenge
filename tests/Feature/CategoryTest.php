@@ -41,4 +41,11 @@ class CategoryTest extends FeatureTestCase
 
         return json_decode((string) $this->app->handle($request)->getBody(), true);
     }
+
+    public function testShowingACategoryIgnoresSqlInjection(): void
+    {
+        $categories = $this->getJson('/categories/4 OR 1=1');
+
+        $this->assertSame([], $categories);
+    }
 }
