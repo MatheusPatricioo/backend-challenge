@@ -24,10 +24,37 @@ class ProductTest extends FeatureTestCase
         $this->assertSame(['furniture', 'house'], array_column($categories, 'title'));
     }
 
+    public function testShowingAProductShowsAllItsCategories(): void
+    {
+        $productId = $this->createProductWithCategories(['furniture', 'house']);
+
+        $product = $this->showProduct($productId);
+
+        $this->assertSame(['furniture', 'house'], array_column($product['categories'], 'title'));
+    }
+
+    public function testShowingAProductShowsItsDefaultCategory(): void
+    {
+        $productId = $this->createProductWithCategories(['phone'], categoryCompanyId: null);
+
+        $product = $this->showProduct($productId);
+
+        $this->assertSame(['phone'], array_column($product['categories'], 'title'));
+    }
+
     private function listProducts(): array
     {
         $request = (new ServerRequestFactory())
             ->createServerRequest('GET', '/products')
+            ->withHeader('admin_user_id', '1');
+
+        return json_decode((string) $this->app->handle($request)->getBody(), true);
+    }
+
+    private function showProduct(int $productId): array
+    {
+        $request = (new ServerRequestFactory())
+            ->createServerRequest('GET', "/products/{$productId}")
             ->withHeader('admin_user_id', '1');
 
         return json_decode((string) $this->app->handle($request)->getBody(), true);

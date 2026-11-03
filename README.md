@@ -200,6 +200,7 @@ Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplica
 ### Alterações
 
 #### Categorias
+#### Categorias
 
 **Categoria errada na listagem** (ex.: `blue trouser` como `phone`)
 - **Problema:** produtos apareciam com a categoria errada, e a listagem retornava apenas 6 dos 18 produtos.
@@ -217,3 +218,9 @@ Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplica
       { "id": 6, "title": "house" }
   ]
   ```
+
+**Categoria `null` e categorias faltando na busca individual** (ex.: `iphone 8` e `king size bed`)
+- **Problema:** em `GET /products/{id}`, o `iphone 8` vinha com categoria `null` e o `king size bed` mostrava apenas `furniture`.
+- **Causa:** `ProductController::getOne()` buscava só a primeira categoria do produto (`fetch()`) e depois a consultava em `CategoryService::getOne()`, que filtra pela empresa do usuário. Como as categorias padrão têm `company_id` nulo, eram descartadas (no SQL, `NULL = 1` não é verdadeiro).
+- **Solução:** a busca individual passou a usar o mesmo `CategoryService::getByProductIds()` da listagem, que retorna todas as categorias do produto, inclusive as padrão. O método `getProductCategory()`, que ficou sem uso, foi removido. Coberto por testes de feature.
+- **Mudança na API:** assim como na listagem, o campo `category` foi substituído por `categories`.

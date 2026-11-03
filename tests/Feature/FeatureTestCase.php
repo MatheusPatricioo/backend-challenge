@@ -21,7 +21,7 @@ abstract class FeatureTestCase extends TestCase
         $this->app = require __DIR__ . '/../../src/Config/app.php';
     }
 
-    protected function createProductWithCategories(array $categoryTitles): int
+    protected function createProductWithCategories(array $categoryTitles, ?int $categoryCompanyId = 1): int
     {
         $pdo = DB::connect();
 
@@ -29,7 +29,7 @@ abstract class FeatureTestCase extends TestCase
         $productId = (int) $pdo->lastInsertId();
 
         foreach ($categoryTitles as $title) {
-            $pdo->prepare('INSERT INTO category (company_id, title, active) VALUES (1, ?, 1)')->execute([$title]);
+            $pdo->prepare('INSERT INTO category (company_id, title, active) VALUES (?, ?, 1)')->execute([$categoryCompanyId, $title]);
             $pdo->prepare('INSERT INTO product_category (product_id, cat_id) VALUES (?, ?)')->execute([$productId, $pdo->lastInsertId()]);
         }
 
