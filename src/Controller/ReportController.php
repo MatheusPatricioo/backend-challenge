@@ -5,72 +5,40 @@ namespace Contatoseguro\TesteBackend\Controller;
 use Contatoseguro\TesteBackend\Config\DB;
 use Contatoseguro\TesteBackend\Repository\AdminUserRepository;
 use Contatoseguro\TesteBackend\Repository\CategoryRepository;
+use Contatoseguro\TesteBackend\Repository\CompanyRepository;
 use Contatoseguro\TesteBackend\Repository\ProductLogRepository;
 use Contatoseguro\TesteBackend\Repository\ProductRepository;
 use Contatoseguro\TesteBackend\Service\CompanyService;
 use Contatoseguro\TesteBackend\Service\ProductService;
+use Contatoseguro\TesteBackend\Service\ReportService;
+use Contatoseguro\TesteBackend\View\HtmlTable;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Contatoseguro\TesteBackend\Repository\CompanyRepository;
 
 class ReportController
 {
-    private ProductService $productService;
-    private CompanyService $companyService;
+    private ReportService $service;
 
     public function __construct()
     {
         $pdo = DB::connect();
 
-        $this->productService = new ProductService(
-            new ProductRepository($pdo),
-            new ProductLogRepository($pdo),
-            new CategoryRepository($pdo),
-            new AdminUserRepository($pdo)
+        $this->service = new ReportService(
+            new ProductService(
+                new ProductRepository($pdo),
+                new ProductLogRepository($pdo),
+                new CategoryRepository($pdo),
+                new AdminUserRepository($pdo)
+            ),
+            new CompanyService(new CompanyRepository($pdo))
         );
-        $this->companyService = new CompanyService(new CompanyRepository($pdo));
     }
 
     public function generate(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];
 
-        $data = [];
-        $data[] = [
-            'Id do produto',
-            'Nome da Empresa',
-            'Nome do Produto',
-            'Valor do Produto',
-            'Categorias do Produto',
-            'Data de Criação',
-            'Logs de Alterações'
-        ];
-
-        $products = $this->productService->getAll($adminUserId);
-
-        foreach ($products as $i => $product) {
-            $companyName = $this->companyService->getOne($product->company_id)->name;
-
-            $productLogs = $this->productService->getLog($product->id);
-
-            $data[$i+1][] = $product->id;
-            $data[$i+1][] = $companyName;
-            $data[$i+1][] = $product->title;
-            $data[$i+1][] = $product->price;
-            $data[$i+1][] = implode(', ', array_column($product->categories, 'title'));
-            $data[$i+1][] = $product->created_at;
-            $data[$i+1][] = $productLogs;
-        }
-
-        $report = "<table style='font-size: 10px;'>";
-        foreach ($data as $row) {
-            $report .= "<tr>";
-            foreach ($row as $column) {
-                $report .= "<td>{$column}</td>";
-            }
-            $report .= "</tr>";
-        }
-        $report .= "</table>";
+        $report = HtmlTable::render($this->service->generate($adminUserId));
 
         $response->getBody()->write($report);
         return $response->withStatus(200)->withHeader('Content-Type', 'text/html');
