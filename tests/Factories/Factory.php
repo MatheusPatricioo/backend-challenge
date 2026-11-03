@@ -20,6 +20,6 @@ abstract class Factory
         $pdo->prepare('INSERT INTO ' . static::TABLE . " ({$columns}) VALUES ({$placeholders})")
             ->execute(array_values($data));
 
-        return (int) $pdo->lastInsertId();
+        return (int)$pdo->lastInsertId();
     }
 }

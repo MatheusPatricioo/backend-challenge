@@ -8,7 +8,7 @@ use Contatoseguro\TesteBackend\Controller\ReportController;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
-/** @var App $app*/
+/** @var App $app */
 $app->get('/', [HomeController::class, 'home']);
 
 $app->group('/companies', function (RouteCollectorProxy $group) {

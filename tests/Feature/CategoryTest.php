@@ -47,6 +47,6 @@ class CategoryTest extends FeatureTestCase
             ->createServerRequest('GET', $uri)
             ->withHeader('admin_user_id', '1');
 
-        return json_decode((string) $this->app->handle($request)->getBody(), true);
+        return json_decode((string)$this->app->handle($request)->getBody(), true);
     }
 }

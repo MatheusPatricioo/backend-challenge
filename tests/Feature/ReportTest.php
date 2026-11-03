@@ -73,6 +73,6 @@ class ReportTest extends FeatureTestCase
             ->createServerRequest('GET', '/report')
             ->withHeader('admin_user_id', '1');
 
-        return (string) $this->app->handle($request)->getBody();
+        return (string)$this->app->handle($request)->getBody();
     }
 }

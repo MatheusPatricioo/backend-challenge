@@ -104,7 +104,7 @@ class ProductTest extends FeatureTestCase
         $productInCategoryId = ProductFactory::create(categoryIds: [$categoryId]);
         $otherProductId = ProductFactory::create();
 
-        $listedIds = array_column($this->listProducts(query: ['category_id' => (string) $categoryId]), 'id');
+        $listedIds = array_column($this->listProducts(query: ['category_id' => (string)$categoryId]), 'id');
 
         $this->assertContains($productInCategoryId, $listedIds);
         $this->assertNotContains($otherProductId, $listedIds);
@@ -190,10 +190,10 @@ class ProductTest extends FeatureTestCase
     {
         $request = (new ServerRequestFactory())
             ->createServerRequest('GET', '/products')
-            ->withHeader('admin_user_id', (string) $adminUserId)
+            ->withHeader('admin_user_id', (string)$adminUserId)
             ->withQueryParams($query);
 
-        return json_decode((string) $this->app->handle($request)->getBody(), true);
+        return json_decode((string)$this->app->handle($request)->getBody(), true);
     }
 
     private function showProduct(int $productId): array
@@ -202,7 +202,7 @@ class ProductTest extends FeatureTestCase
             ->createServerRequest('GET', "/products/{$productId}")
             ->withHeader('admin_user_id', '1');
 
-        return json_decode((string) $this->app->handle($request)->getBody(), true);
+        return json_decode((string)$this->app->handle($request)->getBody(), true);
     }
 
     private function sendProduct(string $method, string $uri, array $fields = []): void

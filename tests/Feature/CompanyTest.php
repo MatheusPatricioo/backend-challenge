@@ -15,7 +15,7 @@ class CompanyTest extends FeatureTestCase
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame(
             [['id' => 1, 'name' => 'XPTO Ltda.', 'active' => 1]],
-            json_decode((string) $response->getBody(), true)
+            json_decode((string)$response->getBody(), true)
         );
     }
 }
