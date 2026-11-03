@@ -1,6 +1,9 @@
 {
     "name": "contatoseguro/teste-backend",
     "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "ext-pdo_sqlite": "*",
         "slim/slim": "^4.12",
         "slim/psr7": "^1.6",
         "robmorgan/phinx": "^0.16.6",
