@@ -172,6 +172,8 @@ Para efetuar a criação do ambiente docker, partimos de algumas premissas:
 
 ## Suas Respostas, Dúvidas e Observações
 
+As seções seguem a ordem do enunciado: primeiro o ambiente e os testes, depois as demandas do cliente, os problemas que encontrei durante o desenvolvimento e, por fim, a refatoração. Nas causas dos bugs, os métodos citados são os do código original; depois, o acesso ao banco foi movido para repositories.
+
 ### Ambiente
 
 #### Docker
@@ -188,19 +190,11 @@ Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.s
 A coleção em `docs/postman-api.json` não funcionava ao ser importada: as variáveis usavam a sintaxe do Insomnia (`{{ _.base_url }}`) em vez da do Postman (`{{base_url}}`), e as URLs terminavam com `/`, o que não corresponde às rotas do Slim nem à documentação em `docs/api-docs.pdf`. Corrigi as duas coisas.
 
 ### Testes
-
-#### Correção dos testes unitários
-Ao rodar `composer test` foram apontados dois problemas:
-- **Aviso de `Deprecated` do PHPUnit:** o `composer.json` fixava a versão `9.5` (9.5.0), lançada antes do PHP 8.1 e incompatível com ele. Atualizei para `^9.6`, uma atualização minor, sem impacto nos testes existentes.
-- **Teste `Hydrate by fetch` falhando:** o `Product::hydrateByFetch()` convertia o preço com `(int)`, descartando os centavos (99.99 virava 99). O teste estava correto e o erro era no código, que afetava também a API (`GET /products/{id}` retornava o preço truncado). Troquei o cast para `(float)`.
-
-#### Testes de feature
-- Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta. Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, então o banco real nunca é alterado. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
+Além dos testes unitários existentes, adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta.
+- Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, então o banco real nunca é alterado. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
 - Os dados de cada teste são criados por factories (`tests/Factories`), que definem valores padrão para cada tabela e permitem sobrescrever apenas os campos relevantes para o cenário, por exemplo `ProductFactory::create(['active' => 0])`.
 
-### Correções
-
-Os métodos citados nesta seção se referem ao código no momento de cada correção. Depois, o acesso ao banco foi movido para os repositories (ver [Refatoração](#refatoração)).
+### Alterações
 
 #### Categorias
 
@@ -212,7 +206,7 @@ Os métodos citados nesta seção se referem ao código no momento de cada corre
 **Produtos duplicados e categorias incompletas na listagem** *(encontrado ao corrigir o item anterior)*
 - **Problema:** produtos com mais de uma categoria apareciam duplicados na listagem, cada linha com só uma das categorias.
 - **Causa:** o JOIN com `category` gera uma linha por categoria do produto.
-- **Solução:** a listagem passou a buscar os produtos e, em uma segunda query, as categorias de todos eles de uma vez (`CategoryService::getByProductIds()`), evitando o problema de N+1. O relatório, que usa a mesma busca, também foi corrigido. Coberto por testes de feature.
+- **Solução:** a listagem passou a buscar os produtos e, em uma segunda query, as categorias de todos eles de uma vez, evitando o problema de N+1. O relatório, que usa a mesma busca, também foi corrigido. Coberto por testes de feature.
 - **Mudança na API:** o campo `category` (texto) foi substituído por `categories` (lista):
   ```json
   "categories": [
@@ -224,34 +218,36 @@ Os métodos citados nesta seção se referem ao código no momento de cada corre
 **Categoria `null` e categorias faltando na busca individual** (ex.: `iphone 8` e `king size bed`)
 - **Problema:** em `GET /products/{id}`, o `iphone 8` vinha com categoria `null` e o `king size bed` mostrava apenas `furniture`.
 - **Causa:** `ProductController::getOne()` buscava só a primeira categoria do produto (`fetch()`) e depois a consultava em `CategoryService::getOne()`, que filtra pela empresa do usuário. Como as categorias padrão têm `company_id` nulo, eram descartadas (no SQL, `NULL = 1` não é verdadeiro).
-- **Solução:** a busca individual passou a usar o mesmo `CategoryService::getByProductIds()` da listagem, que retorna todas as categorias do produto, inclusive as padrão. O método `getProductCategory()`, que ficou sem uso, foi removido. Coberto por testes de feature.
+- **Solução:** a busca individual passou a usar a mesma busca de categorias da listagem, que retorna todas as categorias do produto, inclusive as padrão. O método `getProductCategory()`, que ficou sem uso, foi removido. Coberto por testes de feature.
 - **Mudança na API:** assim como na listagem, o campo `category` foi substituído por `categories`.
 
-**Categorias padrão não apareciam nas rotas de categoria** *(encontrado ao investigar o item anterior)*
-- **Problema:** `GET /categories` não listava as categorias padrão (`clothing`, `phone`, `computer` e `house`), e `GET /categories/{id}` retornava vazio para elas, contrariando o requisito de que devem aparecer para todas as empresas.
-- **Causa:** `CategoryService::getAll()` e `getOne()` filtravam apenas `company_id = <empresa do usuário>`, descartando as categorias padrão, que têm `company_id` nulo.
-- **Solução:** as duas consultas passaram a aceitar também `company_id IS NULL`. Coberto por testes de feature, incluindo um que garante que categorias de outras empresas continuam ocultas.
-- **Decisão:** `updateOne()` e `deleteOne()` continuam restritos às categorias da própria empresa, então as categorias padrão podem ser vistas, mas não alteradas ou removidas por uma empresa, já que são compartilhadas entre todas.
+#### Filtros e ordenamento
 
-#### Produtos
-**Listagem vazia para usuários diferentes do usuário 1** *(encontrado durante a investigação)*
-- **Problema:** `GET /products` retornava lista vazia para qualquer usuário além do 1, mesmo sendo da mesma empresa.
-- **Causa:** `ProductService::getAll()` comparava o `company_id` do produto com o id do usuário (`WHERE company_id = {$adminUserId}`), o que só funcionava porque o usuário 1 pertence à empresa 1.
-- **Solução:** a consulta passou a buscar a empresa do usuário em `admin_user`. O relatório, que usa a mesma busca, também foi corrigido. Coberto por testes de feature, incluindo um que garante que produtos de outras empresas continuam ocultos.
+`GET /products` passou a aceitar parâmetros opcionais e combináveis:
+
+| Parâmetro | Valores | Efeito |
+|---|---|---|
+| `active` | `1`/`true` ou `0`/`false` | apenas produtos ativos ou inativos |
+| `category_id` | id da categoria | apenas produtos da categoria |
+| `sort` | `created_at` ou `-created_at` | ordena pela data de cadastro, do mais antigo ou do mais novo primeiro |
+
+Exemplo: `GET /products?active=1&category_id=4&sort=-created_at`. Sem parâmetros, a listagem continua como antes.
+
+- Os parâmetros são convertidos no controller em um DTO tipado (`ProductFilters`), para que service e repository não dependam do formato da requisição HTTP.
+- A filtragem é feita na própria consulta SQL. O filtro por categoria usa uma subconsulta, para não duplicar produtos e manter todas as categorias de cada produto na resposta.
+- A ordenação aceita apenas os valores acima; qualquer outro mantém a ordem padrão. Como o `ORDER BY` não aceita parâmetros do prepared statement, ele nunca é montado com texto vindo do usuário.
+- Coberto por testes de feature.
 
 #### Relatório
+
 **Coluna de logs mostrando `Array`**
 - **Problema:** a coluna "Logs de Alterações" mostrava `Array` e gerava warnings de `Array to string conversion`.
 - **Causa:** a lista de logs do produto era inserida diretamente na célula da tabela, sem ser convertida em texto.
 - **Solução:** os logs passaram a ser exibidos no formato pedido, `(Nome do usuário, Tipo de alteração, Data)`, um por linha e em ordem cronológica. As ações são traduzidas (`create` → Criação, `update` → Atualização, `delete` → Remoção) e a data é exibida em `dd/mm/aaaa hh:mm:ss`. Coberto por testes de feature.
 - **Decisão:** logs de usuários inexistentes (como o usuário 6, presente nos dados) aparecem como `Usuário desconhecido`, em vez de sumirem do relatório.
 
-**Relatório vulnerável a XSS** *(encontrado durante a investigação)*
-- **Problema:** valores cadastrados pelos usuários, como títulos de produtos e categorias, eram inseridos no HTML do relatório sem tratamento. Um título como `<script>alert(1)</script>` seria executado no navegador de quem abrisse o relatório.
-- **Causa:** a tabela concatenava os valores diretamente nas células.
-- **Solução:** todas as células passaram a ser escapadas com `htmlspecialchars()` na `HtmlTable`, que concentra a geração do HTML. Coberto por teste de feature.
-
 #### Logs
+
 **Quem alterou o preço do `iphone 8` por último?**
 
 ```sql
@@ -268,11 +264,42 @@ Porém, o log registra apenas o tipo da ação (`create`, `update`, `delete`), e
 
 Observação: o histórico do produto contém dois registros de criação no mesmo instante, um deles atribuído a um usuário inexistente (id 6), o que indica inconsistência nos dados de log.
 
+#### Correção de bug
+
+Ao rodar `composer test` foram apontados dois problemas:
+- **Aviso de `Deprecated` do PHPUnit:** o `composer.json` fixava a versão `9.5` (9.5.0), lançada antes do PHP 8.1 e incompatível com ele. Atualizei para `^9.6`, uma atualização minor, sem impacto nos testes existentes.
+- **Teste `Hydrate by fetch` falhando:** o `Product::hydrateByFetch()` convertia o preço com `(int)`, descartando os centavos (99.99 virava 99). O teste estava correto e o erro era no código, que afetava também a API (`GET /products/{id}` retornava o preço truncado). Troquei o cast para `(float)`.
+
+### Problemas encontrados
+
+Bugs que não foram apontados pelo cliente, mas que encontrei durante o desenvolvimento.
+
+**Categorias padrão não apareciam nas rotas de categoria**
+- **Problema:** `GET /categories` não listava as categorias padrão (`clothing`, `phone`, `computer` e `house`), e `GET /categories/{id}` retornava vazio para elas, contrariando o requisito de que devem aparecer para todas as empresas.
+- **Causa:** `CategoryService::getAll()` e `getOne()` filtravam apenas `company_id = <empresa do usuário>`, descartando as categorias padrão, que têm `company_id` nulo.
+- **Solução:** as duas consultas passaram a aceitar também `company_id IS NULL`. Coberto por testes de feature, incluindo um que garante que categorias de outras empresas continuam ocultas.
+- **Decisão:** a edição e a remoção continuam restritas às categorias da própria empresa, então as categorias padrão podem ser vistas, mas não alteradas ou removidas por uma empresa, já que são compartilhadas entre todas.
+
+**Listagem de produtos vazia para usuários diferentes do usuário 1**
+- **Problema:** `GET /products` retornava lista vazia para qualquer usuário além do 1, mesmo sendo da mesma empresa.
+- **Causa:** `ProductService::getAll()` comparava o `company_id` do produto com o id do usuário (`WHERE company_id = {$adminUserId}`), o que só funcionava porque o usuário 1 pertence à empresa 1.
+- **Solução:** a consulta passou a buscar a empresa do usuário em `admin_user`. O relatório, que usa a mesma busca, também foi corrigido. Coberto por testes de feature, incluindo um que garante que produtos de outras empresas continuam ocultos.
+
+**SQL injection e erros com apóstrofo e `"active": false`**
+- **Problema:** `GET /categories/4 OR 1=1` retornava todas as categorias. Pelo mesmo motivo, títulos com apóstrofo e registros com `"active": false` quebravam a query ao serem salvos.
+- **Causa:** os valores eram interpolados diretamente no texto das queries.
+- **Solução:** todas as queries passaram a usar prepared statements, durante a extração do acesso ao banco para repositories. A injeção é coberta por teste de feature.
+
+**Relatório vulnerável a XSS**
+- **Problema:** valores cadastrados pelos usuários, como títulos de produtos e categorias, eram inseridos no HTML do relatório sem tratamento. Um título como `<script>alert(1)</script>` seria executado no navegador de quem abrisse o relatório.
+- **Causa:** a tabela concatenava os valores diretamente nas células.
+- **Solução:** todas as células passaram a ser escapadas com `htmlspecialchars()` na `HtmlTable`, que concentra a geração do HTML. Coberto por teste de feature.
+
 ### Refatoração
 Tratei o projeto como um sistema legado: em vez de reescrever tudo, refatorei de forma incremental apenas o que trazia ganho concreto, sempre protegido pelos testes de feature, que passaram sem nenhuma alteração após cada etapa.
 
 #### Camada de repositories
-O acesso ao banco estava misturado às regras de negócio nos services, com valores interpolados diretamente nas queries, o que deixava a aplicação vulnerável a SQL injection. Separei as responsabilidades em camadas:
+O acesso ao banco estava misturado às regras de negócio nos services. Separei as responsabilidades em camadas:
 - **Controller:** recebe a requisição e devolve a resposta.
 - **Service:** orquestra as regras de negócio.
 - **Repository:** concentra o acesso ao banco, sempre com prepared statements.
@@ -281,10 +308,8 @@ Repositories criados:
 - `CategoryRepository`: tabela `category`.
 - `ProductRepository`: tabelas `product` e `product_category`.
 - `ProductLogRepository`: tabela `product_log`.
-- `AdminUserRepository`: único ponto que resolve a empresa do usuário, antes repetido nos services.
 - `CompanyRepository`: tabela `company`. O `CompanyController` fazia as queries diretamente, sem passar por um service.
-
-Além de eliminar o SQL injection (coberto por teste de feature), os prepared statements corrigiram dois erros: títulos com apóstrofo e registros com `"active": false`, que antes quebravam a query, passaram a ser salvos corretamente.
+- `AdminUserRepository`: único ponto que resolve a empresa do usuário, antes repetido nos services.
 
 **Interfaces apenas nos repositories:** os services recebem os repositories pelo construtor e dependem das suas interfaces (`src/Repository/Contracts`), não das implementações. Isso isola as regras de negócio do banco de dados: é possível trocar o banco (um dos desafios propostos) ou testar um service com um repository falso sem alterá-lo. Não criei interfaces para os services porque eles têm uma única implementação e não há cenário de substituição, então a abstração não traria benefício.
 
