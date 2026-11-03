@@ -128,6 +128,64 @@ class ProductTest extends FeatureTestCase
         $this->assertSame($newestId, $listedIds[0]);
     }
 
+    public function testListingProductsFiltersByMinimumStock(): void
+    {
+        $enoughStockId = ProductFactory::create(['stock' => 5]);
+        $lowStockId = ProductFactory::create(['stock' => 4]);
+
+        $listedIds = array_column($this->listProducts(query: ['min_stock' => '5']), 'id');
+
+        $this->assertContains($enoughStockId, $listedIds);
+        $this->assertNotContains($lowStockId, $listedIds);
+    }
+
+    public function testShowingAProductShowsItsStock(): void
+    {
+        $productId = ProductFactory::create(['stock' => 7]);
+
+        $product = $this->showProduct($productId);
+
+        $this->assertSame(7, $product['stock']);
+    }
+
+    public function testCreatingAProductWithoutStockSetsItToZero(): void
+    {
+        $this->sendProduct('POST', '/products', ['title' => 'product without stock']);
+
+        $stocks = array_column($this->listProducts(), 'stock', 'title');
+
+        $this->assertSame(0, $stocks['product without stock']);
+    }
+
+    public function testCreatingAProductSavesItsStock(): void
+    {
+        $this->sendProduct('POST', '/products', ['title' => 'product with stock', 'stock' => 15]);
+
+        $stocks = array_column($this->listProducts(), 'stock', 'title');
+
+        $this->assertSame(15, $stocks['product with stock']);
+    }
+
+    public function testUpdatingAProductSavesItsStock(): void
+    {
+        $productId = ProductFactory::create(['stock' => 5]);
+
+        $this->sendProduct('PUT', "/products/{$productId}", ['stock' => 20]);
+
+        $stocks = array_column($this->listProducts(), 'stock', 'id');
+        $this->assertSame(20, $stocks[$productId]);
+    }
+
+    public function testUpdatingAProductWithoutStockKeepsIt(): void
+    {
+        $productId = ProductFactory::create(['stock' => 5]);
+
+        $this->sendProduct('PUT', "/products/{$productId}");
+
+        $stocks = array_column($this->listProducts(), 'stock', 'id');
+        $this->assertSame(5, $stocks[$productId]);
+    }
+
     private function listProducts(int $adminUserId = 1, array $query = []): array
     {
         $request = (new ServerRequestFactory())
@@ -145,5 +203,20 @@ class ProductTest extends FeatureTestCase
             ->withHeader('admin_user_id', '1');
 
         return json_decode((string) $this->app->handle($request)->getBody(), true);
+    }
+
+    private function sendProduct(string $method, string $uri, array $fields = []): void
+    {
+        $body = array_merge(
+            ['company_id' => 1, 'title' => 'test product', 'price' => 10, 'active' => true, 'category_id' => 1],
+            $fields
+        );
+
+        $request = (new ServerRequestFactory())
+            ->createServerRequest($method, $uri)
+            ->withHeader('admin_user_id', '1')
+            ->withParsedBody($body);
+
+        $this->app->handle($request);
     }
 }

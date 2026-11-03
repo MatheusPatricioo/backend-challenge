@@ -176,22 +176,22 @@ As seções seguem a ordem do enunciado: primeiro o ambiente e os testes, depois
 
 ### Ambiente
 
-#### Docker
 ```bash
 docker compose up -d --build                                       # sobe a aplicação em localhost:8000
-docker compose exec app composer test                              # roda todos os testes (unitários e de feature)
 docker compose exec app composer migrate                           # executa as migrations
+docker compose exec app composer test                              # roda todos os testes (unitários e de feature)
+docker compose exec app composer rollback-migration                # reverte a última migration
 docker compose exec app composer create-migration NomeDaMigration  # cria uma migration
 docker compose exec -e XDEBUG_TRIGGER=1 app vendor/bin/phpunit     # roda os testes com o Xdebug ativo
 ```
-Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.sqlite3`.
+Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.sqlite3`. Depois de subir o container, rode as migrations para aplicar as mudanças de banco das novas funcionalidades. O comando de reverter migrations no `composer.json` se chama `rollback-migration`, e não `rollback` como indicado no enunciado.
 
 #### Coleção do Postman
 A coleção em `docs/postman-api.json` não funcionava ao ser importada: as variáveis usavam a sintaxe do Insomnia (`{{ _.base_url }}`) em vez da do Postman (`{{base_url}}`), e as URLs terminavam com `/`, o que não corresponde às rotas do Slim nem à documentação em `docs/api-docs.pdf`. Corrigi as duas coisas.
 
 ### Testes
 Além dos testes unitários existentes, adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta.
-- Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, então o banco real nunca é alterado. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
+- Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, com as migrations aplicadas, então o banco real nunca é alterado e os testes usam a mesma estrutura de banco da aplicação. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
 - Os dados de cada teste são criados por factories (`tests/Factories`), que definem valores padrão para cada tabela e permitem sobrescrever apenas os campos relevantes para o cenário, por exemplo `ProductFactory::create(['active' => 0])`.
 
 ### Alterações
@@ -267,8 +267,25 @@ Observação: o histórico do produto contém dois registros de criação no mes
 #### Correção de bug
 
 Ao rodar `composer test` foram apontados dois problemas:
-- **Aviso de `Deprecated` do PHPUnit:** o `composer.json` fixava a versão `9.5` (9.5.0), lançada antes do PHP 8.1 e incompatível com ele. Atualizei para `^9.6`, uma atualização minor, sem impacto nos testes existentes.
-- **Teste `Hydrate by fetch` falhando:** o `Product::hydrateByFetch()` convertia o preço com `(int)`, descartando os centavos (99.99 virava 99). O teste estava correto e o erro era no código, que afetava também a API (`GET /products/{id}` retornava o preço truncado). Troquei o cast para `(float)`.
+- **Aviso de `Deprecated` do PHPUnit:** ...
+- **Teste `Hydrate by fetch` falhando:** ... Troquei o cast para `(float)`.
+
+### Features
+
+#### Estoque
+
+Migration `AddStockToProducts`: adiciona a coluna `stock` à tabela `product`, com valor padrão `0`, e o `down()` a remove.
+
+| Regra do cliente | Como usar |
+|---|---|
+| Informar o estoque ao cadastrar; se não informado, é 0 | `POST /products` com `"stock": 15` (opcional) |
+| Atualizar o estoque | `PUT /products/{id}` com `"stock": 20` |
+| Filtrar por estoque mínimo | `GET /products?min_stock=5` (estoque maior ou igual a 5), combinável com os outros filtros |
+
+`GET /products` e `GET /products/{id}` passaram a retornar o campo `stock`.
+
+- **Decisão:** no `PUT`, o campo `stock` é opcional e, quando não enviado, o estoque atual é mantido (`COALESCE` no SQL). Assim, clientes que já editam produtos sem esse campo não zeram o estoque sem perceber.
+- Coberto por testes de feature, um por regra, além de um que garante que o `PUT` sem `stock` mantém o valor atual.
 
 ### Problemas encontrados
 

@@ -2,8 +2,8 @@
 
 namespace Contatoseguro\TesteBackend\Repository;
 
-use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
 use Contatoseguro\TesteBackend\Dto\ProductFilters;
+use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
 
 class ProductRepository implements ProductRepositoryInterface
 {
@@ -25,12 +25,14 @@ class ProductRepository implements ProductRepositoryInterface
             WHERE company_id = :company_id
               AND (:active IS NULL OR active = :active)
               AND (:category_id IS NULL OR id IN (SELECT product_id FROM product_category WHERE cat_id = :category_id))
+              AND (:min_stock IS NULL OR stock >= :min_stock)
             ORDER BY {$orderBy}
         ");
         $stm->execute([
             'company_id' => $companyId,
             'active' => $filters->active,
             'category_id' => $filters->categoryId,
+            'min_stock' => $filters->minStock,
         ]);
 
         return $stm->fetchAll();
@@ -47,14 +49,15 @@ class ProductRepository implements ProductRepositoryInterface
     public function insertOne($body): int
     {
         $stm = $this->pdo->prepare('
-            INSERT INTO product (company_id, title, price, active)
-            VALUES (:company_id, :title, :price, :active)
+            INSERT INTO product (company_id, title, price, active, stock)
+            VALUES (:company_id, :title, :price, :active, :stock)
         ');
         $stm->execute([
             'company_id' => $body['company_id'],
             'title' => $body['title'],
             'price' => $body['price'],
             'active' => (int) $body['active'],
+            'stock' => $body['stock'] ?? 0,
         ]);
 
         return (int) $this->pdo->lastInsertId();
@@ -64,7 +67,8 @@ class ProductRepository implements ProductRepositoryInterface
     {
         $stm = $this->pdo->prepare('
             UPDATE product
-            SET company_id = :company_id, title = :title, price = :price, active = :active
+            SET company_id = :company_id, title = :title, price = :price, active = :active,
+                stock = COALESCE(:stock, stock)
             WHERE id = :id
         ');
 
@@ -73,6 +77,7 @@ class ProductRepository implements ProductRepositoryInterface
             'title' => $body['title'],
             'price' => $body['price'],
             'active' => (int) $body['active'],
+            'stock' => $body['stock'] ?? null,
             'id' => $id,
         ]);
     }

@@ -8,6 +8,7 @@ readonly class ProductFilters
         public ?int    $active = null,
         public ?int    $categoryId = null,
         public ?string $sort = null,
+        public ?int $minStock = null,
     ) {
     }
 
@@ -17,6 +18,7 @@ readonly class ProductFilters
             active: isset($params['active']) ? (int) filter_var($params['active'], FILTER_VALIDATE_BOOLEAN) : null,
             categoryId: isset($params['category_id']) ? (int) $params['category_id'] : null,
             sort: $params['sort'] ?? null,
+            minStock: isset($params['min_stock']) ? (int) $params['min_stock'] : null,
         );
     }
 }
