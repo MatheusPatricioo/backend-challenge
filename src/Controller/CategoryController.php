@@ -2,6 +2,9 @@
 
 namespace Contatoseguro\TesteBackend\Controller;
 
+use Contatoseguro\TesteBackend\Config\DB;
+use Contatoseguro\TesteBackend\Repository\AdminUserRepository;
+use Contatoseguro\TesteBackend\Repository\CategoryRepository;
 use Contatoseguro\TesteBackend\Service\CategoryService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -12,24 +15,25 @@ class CategoryController
 
     public function __construct()
     {
-        $this->service = new CategoryService();
+        $pdo = DB::connect();
+        $this->service = new CategoryService(new CategoryRepository($pdo), new AdminUserRepository($pdo));
     }
 
     public function getAll(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];
-        
-        $stm = $this->service->getAll($adminUserId);
-        $response->getBody()->write(json_encode($stm->fetchAll()));
+
+        $categories = $this->service->getAll($adminUserId);
+        $response->getBody()->write(json_encode($categories));
         return $response->withStatus(200);
     }
 
     public function getOne(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];
-        $stm = $this->service->getOne($adminUserId, $args['id']);
+        $category = $this->service->getOne($adminUserId, $args['id']);
 
-        $response->getBody()->write(json_encode($stm->fetchAll()));
+        $response->getBody()->write(json_encode($category));
         return $response->withStatus(200);
     }
 
@@ -39,7 +43,7 @@ class CategoryController
         $adminUserId = $request->getHeader('admin_user_id')[0];
 
         if ($this->service->insertOne($body, $adminUserId)) {
-            return $response->withStatus(200);
+        return $response->withStatus(200);
         } else {
             return $response->withStatus(404);
         }

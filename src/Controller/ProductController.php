@@ -2,7 +2,10 @@
 
 namespace Contatoseguro\TesteBackend\Controller;
 
+use Contatoseguro\TesteBackend\Config\DB;
 use Contatoseguro\TesteBackend\Model\Product;
+use Contatoseguro\TesteBackend\Repository\AdminUserRepository;
+use Contatoseguro\TesteBackend\Repository\CategoryRepository;
 use Contatoseguro\TesteBackend\Service\CategoryService;
 use Contatoseguro\TesteBackend\Service\ProductService;
 use Psr\Http\Message\ResponseInterface;
@@ -15,8 +18,10 @@ class ProductController
 
     public function __construct()
     {
+        $pdo = DB::connect();
+
         $this->service = new ProductService();
-        $this->categoryService = new CategoryService();
+        $this->categoryService = new CategoryService(new CategoryRepository($pdo), new AdminUserRepository($pdo));
     }
 
     public function getAll(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

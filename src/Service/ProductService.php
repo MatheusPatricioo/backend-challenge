@@ -3,6 +3,8 @@
 namespace Contatoseguro\TesteBackend\Service;
 
 use Contatoseguro\TesteBackend\Config\DB;
+use Contatoseguro\TesteBackend\Repository\AdminUserRepository;
+use Contatoseguro\TesteBackend\Repository\CategoryRepository;
 
 class ProductService
 {
@@ -12,7 +14,7 @@ class ProductService
     public function __construct()
     {
         $this->pdo = DB::connect();
-        $this->categoryService = new CategoryService();
+        $this->categoryService = new CategoryService(new CategoryRepository($this->pdo), new AdminUserRepository($this->pdo));
     }
 
     public function getAll($adminUserId): array

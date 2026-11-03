@@ -254,3 +254,20 @@ A última alteração no produto foi feita pela usuária **corin** (id 3), em 22
 Porém, o log registra apenas o tipo da ação (`create`, `update`, `delete`), e não quais campos foram alterados. Por isso, não é possível afirmar que essa alteração foi no preço, apenas que ela foi a última a alterar o produto. Para responder com precisão, o log precisaria guardar os valores anteriores e novos de cada campo alterado.
 
 Observação: o histórico do produto contém dois registros de criação no mesmo instante, um deles atribuído a um usuário inexistente (id 6), o que indica inconsistência nos dados de log.
+
+### Refatoração
+
+Tratei o projeto como um sistema legado: em vez de reescrever tudo, refatorei de forma incremental apenas o que trazia ganho concreto, sempre protegido pelos testes de feature, que passaram sem nenhuma alteração após cada etapa.
+
+#### Camada de repositories
+
+O acesso ao banco estava misturado às regras de negócio nos services, com valores interpolados diretamente nas queries, o que deixava a aplicação vulnerável a SQL injection. Separei as responsabilidades em camadas:
+- **Controller:** recebe a requisição e devolve a resposta.
+- **Service:** orquestra as regras de negócio.
+- **Repository:** concentra o acesso ao banco, sempre com prepared statements.
+
+**Interfaces apenas nos repositories:** os services recebem os repositories pelo construtor e dependem das suas interfaces (`src/Repository/Contracts`), não das implementações. Isso isola as regras de negócio do banco de dados: é possível trocar o banco (um dos desafios propostos) ou testar um service com um repository falso sem alterá-lo. Não criei interfaces para os services porque eles têm uma única implementação e não há cenário de substituição, então a abstração não traria benefício.
+
+**Sem container de injeção de dependência:** as dependências são montadas manualmente nos controllers. Com poucos controllers, um container adicionaria mais infraestrutura do que resolveria.
+
+- **Categorias:** `CategoryRepository` e `AdminUserRepository`, que passou a ser o único ponto que resolve a empresa do usuário. Com os prepared statements, títulos com apóstrofo e categorias com `"active": false`, que antes geravam erro de SQL, passaram a ser salvos corretamente.
