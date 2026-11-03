@@ -195,7 +195,8 @@ Ao rodar `composer test` foram apontados dois problemas:
 - **Teste `Hydrate by fetch` falhando:** o `Product::hydrateByFetch()` convertia o preço com `(int)`, descartando os centavos (99.99 virava 99). O teste estava correto e o erro era no código, que afetava também a API (`GET /products/{id}` retornava o preço truncado). Troquei o cast para `(float)`.
 
 #### Testes de feature
-Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta. Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, então o banco real nunca é alterado. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
+- Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta. Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, então o banco real nunca é alterado. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
+- Os dados de cada teste são criados por factories (`tests/Factories`), que definem valores padrão para cada tabela e permitem sobrescrever apenas os campos relevantes para o cenário, por exemplo `ProductFactory::create(['active' => 0])`.
 
 ### Correções
 

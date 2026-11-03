@@ -42,6 +42,7 @@ class ProductTest extends TestCase
     public function testSetCategories(): void
     {
         $product = new Product(1, 2, 'Test Product', 99.99, true, '2023-10-01');
+
         $product->setCategories([['id' => 1, 'title' => 'Electronics']]);
 
         $this->assertEquals([['id' => 1, 'title' => 'Electronics']], $product->categories);

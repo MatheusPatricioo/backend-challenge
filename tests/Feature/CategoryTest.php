@@ -2,13 +2,14 @@
 
 namespace ContatoSeguro\Tests\Feature;
 
+use ContatoSeguro\Tests\Factories\CategoryFactory;
 use Slim\Psr7\Factory\ServerRequestFactory;
 
 class CategoryTest extends FeatureTestCase
 {
     public function testListingCategoriesIncludesDefaultCategories(): void
     {
-        $this->createCategory('toys', companyId: null);
+        CategoryFactory::create(['title' => 'toys', 'company_id' => null]);
 
         $titles = array_column($this->getJson('/categories'), 'title');
 
@@ -17,7 +18,7 @@ class CategoryTest extends FeatureTestCase
 
     public function testListingCategoriesExcludesCategoriesOfOtherCompanies(): void
     {
-        $this->createCategory('toys', companyId: 2);
+        CategoryFactory::create(['title' => 'toys', 'company_id' => 2]);
 
         $titles = array_column($this->getJson('/categories'), 'title');
 
@@ -26,11 +27,18 @@ class CategoryTest extends FeatureTestCase
 
     public function testShowingADefaultCategoryReturnsIt(): void
     {
-        $categoryId = $this->createCategory('toys', companyId: null);
+        $categoryId = CategoryFactory::create(['title' => 'toys', 'company_id' => null]);
 
         $titles = array_column($this->getJson("/categories/{$categoryId}"), 'title');
 
         $this->assertSame(['toys'], $titles);
+    }
+
+    public function testShowingACategoryIgnoresSqlInjection(): void
+    {
+        $categories = $this->getJson('/categories/4 OR 1=1');
+
+        $this->assertSame([], $categories);
     }
 
     private function getJson(string $uri): array
@@ -40,12 +48,5 @@ class CategoryTest extends FeatureTestCase
             ->withHeader('admin_user_id', '1');
 
         return json_decode((string) $this->app->handle($request)->getBody(), true);
-    }
-
-    public function testShowingACategoryIgnoresSqlInjection(): void
-    {
-        $categories = $this->getJson('/categories/4 OR 1=1');
-
-        $this->assertSame([], $categories);
     }
 }

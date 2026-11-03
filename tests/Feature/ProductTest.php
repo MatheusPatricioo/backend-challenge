@@ -2,13 +2,19 @@
 
 namespace ContatoSeguro\Tests\Feature;
 
+use ContatoSeguro\Tests\Factories\AdminUserFactory;
+use ContatoSeguro\Tests\Factories\CategoryFactory;
+use ContatoSeguro\Tests\Factories\ProductFactory;
 use Slim\Psr7\Factory\ServerRequestFactory;
 
 class ProductTest extends FeatureTestCase
 {
     public function testListingProductsReturnsEachProductOnce(): void
     {
-        $productId = $this->createProductWithCategories(['furniture', 'house']);
+        $productId = ProductFactory::create(categoryIds: [
+            CategoryFactory::create(['title' => 'furniture']),
+            CategoryFactory::create(['title' => 'house']),
+        ]);
 
         $listedIds = array_column($this->listProducts(), 'id');
 
@@ -17,7 +23,10 @@ class ProductTest extends FeatureTestCase
 
     public function testListingProductsShowsAllCategoriesOfTheProduct(): void
     {
-        $productId = $this->createProductWithCategories(['furniture', 'house']);
+        $productId = ProductFactory::create(categoryIds: [
+            CategoryFactory::create(['title' => 'furniture']),
+            CategoryFactory::create(['title' => 'house']),
+        ]);
 
         $categories = array_column($this->listProducts(), 'categories', 'id')[$productId];
 
@@ -26,8 +35,8 @@ class ProductTest extends FeatureTestCase
 
     public function testListingProductsShowsProductsOfTheUsersCompany(): void
     {
-        $productId = $this->createProductWithCategories(['furniture']);
-        $userId = $this->createAdminUser(companyId: 1);
+        $productId = ProductFactory::create();
+        $userId = AdminUserFactory::create();
 
         $listedIds = array_column($this->listProducts($userId), 'id');
 
@@ -36,8 +45,8 @@ class ProductTest extends FeatureTestCase
 
     public function testListingProductsHidesProductsOfOtherCompanies(): void
     {
-        $productId = $this->createProductWithCategories(['furniture']);
-        $userId = $this->createAdminUser(companyId: 2);
+        $productId = ProductFactory::create();
+        $userId = AdminUserFactory::create(['company_id' => 2]);
 
         $listedIds = array_column($this->listProducts($userId), 'id');
 
@@ -46,7 +55,10 @@ class ProductTest extends FeatureTestCase
 
     public function testShowingAProductShowsAllItsCategories(): void
     {
-        $productId = $this->createProductWithCategories(['furniture', 'house']);
+        $productId = ProductFactory::create(categoryIds: [
+            CategoryFactory::create(['title' => 'furniture']),
+            CategoryFactory::create(['title' => 'house']),
+        ]);
 
         $product = $this->showProduct($productId);
 
@@ -55,7 +67,9 @@ class ProductTest extends FeatureTestCase
 
     public function testShowingAProductShowsItsDefaultCategory(): void
     {
-        $productId = $this->createProductWithCategories(['phone'], categoryCompanyId: null);
+        $productId = ProductFactory::create(categoryIds: [
+            CategoryFactory::create(['title' => 'phone', 'company_id' => null]),
+        ]);
 
         $product = $this->showProduct($productId);
 
