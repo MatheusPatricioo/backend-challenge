@@ -2,6 +2,11 @@
 
 namespace Contatoseguro\TesteBackend\Controller;
 
+use Contatoseguro\TesteBackend\Config\DB;
+use Contatoseguro\TesteBackend\Repository\AdminUserRepository;
+use Contatoseguro\TesteBackend\Repository\CategoryRepository;
+use Contatoseguro\TesteBackend\Repository\ProductLogRepository;
+use Contatoseguro\TesteBackend\Repository\ProductRepository;
 use Contatoseguro\TesteBackend\Service\CompanyService;
 use Contatoseguro\TesteBackend\Service\ProductService;
 use Psr\Http\Message\ResponseInterface;
@@ -11,17 +16,24 @@ class ReportController
 {
     private ProductService $productService;
     private CompanyService $companyService;
-    
+
     public function __construct()
     {
-        $this->productService = new ProductService();
+        $pdo = DB::connect();
+
+        $this->productService = new ProductService(
+            new ProductRepository($pdo),
+            new ProductLogRepository($pdo),
+            new CategoryRepository($pdo),
+            new AdminUserRepository($pdo)
+        );
         $this->companyService = new CompanyService();
     }
-    
+
     public function generate(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];
-        
+
         $data = [];
         $data[] = [
             'Id do produto',
@@ -39,9 +51,8 @@ class ReportController
             $stm = $this->companyService->getNameById($product->company_id);
             $companyName = $stm->fetch()->name;
 
-            $stm = $this->productService->getLog($product->id);
-            $productLogs = $stm->fetchAll();
-            
+            $productLogs = $this->productService->getLog($product->id);
+
             $data[$i+1][] = $product->id;
             $data[$i+1][] = $companyName;
             $data[$i+1][] = $product->title;
@@ -50,7 +61,7 @@ class ReportController
             $data[$i+1][] = $product->created_at;
             $data[$i+1][] = $productLogs;
         }
-        
+
         $report = "<table style='font-size: 10px;'>";
         foreach ($data as $row) {
             $report .= "<tr>";
@@ -60,7 +71,7 @@ class ReportController
             $report .= "</tr>";
         }
         $report .= "</table>";
-        
+
         $response->getBody()->write($report);
         return $response->withStatus(200)->withHeader('Content-Type', 'text/html');
     }

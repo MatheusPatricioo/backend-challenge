@@ -197,7 +197,9 @@ Ao rodar `composer test` foram apontados dois problemas:
 #### Testes de feature
 Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta. Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, então o banco real nunca é alterado. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
 
-### Alterações
+### Correções
+
+Os métodos citados nesta seção se referem ao código no momento de cada correção. Depois, o acesso ao banco foi movido para os repositories (ver [Refatoração](#refatoração)).
 
 #### Categorias
 
@@ -266,8 +268,14 @@ O acesso ao banco estava misturado às regras de negócio nos services, com valo
 - **Service:** orquestra as regras de negócio.
 - **Repository:** concentra o acesso ao banco, sempre com prepared statements.
 
+Repositories criados:
+- `CategoryRepository`: tabela `category`.
+- `ProductRepository`: tabelas `product` e `product_category`.
+- `ProductLogRepository`: tabela `product_log`.
+- `AdminUserRepository`: único ponto que resolve a empresa do usuário, antes repetido nos services.
+
+Além de eliminar o SQL injection, os prepared statements corrigiram dois erros: títulos com apóstrofo e registros com `"active": false`, que antes quebravam a query, passaram a ser salvos corretamente.
+
 **Interfaces apenas nos repositories:** os services recebem os repositories pelo construtor e dependem das suas interfaces (`src/Repository/Contracts`), não das implementações. Isso isola as regras de negócio do banco de dados: é possível trocar o banco (um dos desafios propostos) ou testar um service com um repository falso sem alterá-lo. Não criei interfaces para os services porque eles têm uma única implementação e não há cenário de substituição, então a abstração não traria benefício.
 
 **Sem container de injeção de dependência:** as dependências são montadas manualmente nos controllers. Com poucos controllers, um container adicionaria mais infraestrutura do que resolveria.
-
-- **Categorias:** `CategoryRepository` e `AdminUserRepository`, que passou a ser o único ponto que resolve a empresa do usuário. Com os prepared statements, títulos com apóstrofo e categorias com `"active": false`, que antes geravam erro de SQL, passaram a ser salvos corretamente.

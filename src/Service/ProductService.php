@@ -2,36 +2,27 @@
 
 namespace Contatoseguro\TesteBackend\Service;
 
-use Contatoseguro\TesteBackend\Config\DB;
-use Contatoseguro\TesteBackend\Repository\AdminUserRepository;
-use Contatoseguro\TesteBackend\Repository\CategoryRepository;
+use Contatoseguro\TesteBackend\Repository\Contracts\AdminUserRepositoryInterface;
+use Contatoseguro\TesteBackend\Repository\Contracts\CategoryRepositoryInterface;
+use Contatoseguro\TesteBackend\Repository\Contracts\ProductLogRepositoryInterface;
+use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
 
 class ProductService
 {
-    private \PDO $pdo;
-    private CategoryService $categoryService;
-
-    public function __construct()
-    {
-        $this->pdo = DB::connect();
-        $this->categoryService = new CategoryService(new CategoryRepository($this->pdo), new AdminUserRepository($this->pdo));
+    public function __construct(
+        private ProductRepositoryInterface $productRepository,
+        private ProductLogRepositoryInterface $productLogRepository,
+        private CategoryRepositoryInterface $categoryRepository,
+        private AdminUserRepositoryInterface $adminUserRepository
+    ) {
     }
 
     public function getAll($adminUserId): array
     {
-        $query = "
-            SELECT *
-            FROM product
-            WHERE company_id = (SELECT company_id FROM admin_user WHERE id = {$adminUserId})
-            ORDER BY id
-        ";
+        $companyId = $this->adminUserRepository->getCompanyId($adminUserId);
 
-        $stm = $this->pdo->prepare($query);
-
-        $stm->execute();
-
-        $products = $stm->fetchAll();
-        $categoriesByProduct = $this->categoryService->getByProductIds(array_column($products, 'id'));
+        $products = $this->productRepository->getAll($companyId);
+        $categoriesByProduct = $this->categoryRepository->getByProductIds(array_column($products, 'id'));
 
         foreach ($products as $product) {
             $product->categories = $categoriesByProduct[$product->id] ?? [];
@@ -42,135 +33,35 @@ class ProductService
 
     public function getOne($id)
     {
-        $stm = $this->pdo->prepare("
-            SELECT *
-            FROM product
-            WHERE id = {$id}
-        ");
-        $stm->execute();
-
-        return $stm;
+        return $this->productRepository->getOne($id);
     }
 
     public function insertOne($body, $adminUserId)
     {
-        $stm = $this->pdo->prepare("
-            INSERT INTO product (
-                company_id,
-                title,
-                price,
-                active
-            ) VALUES (
-                {$body['company_id']},
-                '{$body['title']}',
-                {$body['price']},
-                {$body['active']}
-            )
-        ");
-        if (!$stm->execute())
-            return false;
+        $productId = $this->productRepository->insertOne($body);
+        $this->productRepository->insertCategory($productId, $body['category_id']);
 
-        $productId = $this->pdo->lastInsertId();
-
-        $stm = $this->pdo->prepare("
-            INSERT INTO product_category (
-                product_id,
-                cat_id
-            ) VALUES (
-                {$productId},
-                {$body['category_id']}
-            );
-        ");
-        if (!$stm->execute())
-            return false;
-
-        $stm = $this->pdo->prepare("
-            INSERT INTO product_log (
-                product_id,
-                admin_user_id,
-                `action`
-            ) VALUES (
-                {$productId},
-                {$adminUserId},
-                'create'
-            )
-        ");
-
-        return $stm->execute();
+        return $this->productLogRepository->insertOne($productId, $adminUserId, 'create');
     }
 
     public function updateOne($id, $body, $adminUserId)
     {
-        $stm = $this->pdo->prepare("
-            UPDATE product
-            SET company_id = {$body['company_id']},
-                title = '{$body['title']}',
-                price = {$body['price']},
-                active = {$body['active']}
-            WHERE id = {$id}
-        ");
-        if (!$stm->execute())
-            return false;
+        $this->productRepository->updateOne($id, $body);
+        $this->productRepository->updateCategory($id, $body['category_id']);
 
-        $stm = $this->pdo->prepare("
-            UPDATE product_category
-            SET cat_id = {$body['category_id']}
-            WHERE product_id = {$id}
-        ");
-        if (!$stm->execute())
-            return false;
-
-        $stm = $this->pdo->prepare("
-            INSERT INTO product_log (
-                product_id,
-                admin_user_id,
-                `action`
-            ) VALUES (
-                {$id},
-                {$adminUserId},
-                'update'
-            )
-        ");
-
-        return $stm->execute();
+        return $this->productLogRepository->insertOne($id, $adminUserId, 'update');
     }
 
     public function deleteOne($id, $adminUserId)
     {
-        $stm = $this->pdo->prepare("
-            DELETE FROM product_category WHERE product_id = {$id}
-        ");
-        if (!$stm->execute())
-            return false;
-        
-        $stm = $this->pdo->prepare("DELETE FROM product WHERE id = {$id}");
-        if (!$stm->execute())
-            return false;
+        $this->productRepository->deleteCategories($id);
+        $this->productRepository->deleteOne($id);
 
-        $stm = $this->pdo->prepare("
-            INSERT INTO product_log (
-                product_id,
-                admin_user_id,
-                `action`
-            ) VALUES (
-                {$id},
-                {$adminUserId},
-                'delete'
-            )
-        ");
-
-        return $stm->execute();
+        return $this->productLogRepository->insertOne($id, $adminUserId, 'delete');
     }
 
-    public function getLog($id)
+    public function getLog($id): array
     {
-        $stm = $this->pdo->prepare("
-            SELECT *
-            FROM product_log
-            WHERE product_id = {$id}
-        ");
-        $stm->execute();
-
-        return $stm;
+        return $this->productLogRepository->getByProductId($id);
     }
 }

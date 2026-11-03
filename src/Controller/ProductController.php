@@ -6,6 +6,8 @@ use Contatoseguro\TesteBackend\Config\DB;
 use Contatoseguro\TesteBackend\Model\Product;
 use Contatoseguro\TesteBackend\Repository\AdminUserRepository;
 use Contatoseguro\TesteBackend\Repository\CategoryRepository;
+use Contatoseguro\TesteBackend\Repository\ProductLogRepository;
+use Contatoseguro\TesteBackend\Repository\ProductRepository;
 use Contatoseguro\TesteBackend\Service\CategoryService;
 use Contatoseguro\TesteBackend\Service\ProductService;
 use Psr\Http\Message\ResponseInterface;
@@ -20,7 +22,12 @@ class ProductController
     {
         $pdo = DB::connect();
 
-        $this->service = new ProductService();
+        $this->service = new ProductService(
+            new ProductRepository($pdo),
+            new ProductLogRepository($pdo),
+            new CategoryRepository($pdo),
+            new AdminUserRepository($pdo)
+        );
         $this->categoryService = new CategoryService(new CategoryRepository($pdo), new AdminUserRepository($pdo));
     }
 
@@ -35,8 +42,7 @@ class ProductController
 
     public function getOne(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $stm = $this->service->getOne($args['id']);
-        $product = Product::hydrateByFetch($stm->fetch());
+        $product = Product::hydrateByFetch($this->service->getOne($args['id']));
 
         $product->setCategories($this->categoryService->getByProductIds([$product->id])[$product->id] ?? []);
 
