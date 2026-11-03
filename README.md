@@ -316,6 +316,20 @@ Migration `CreateCategoryTranslations`: cria a tabela `category_translation`, co
 - O relatório usa a regra padrão e exibe as categorias em inglês.
 - Coberto por testes de feature, um para cada regra e um para cada rota que aceita o parâmetro.
 
+#### Comentários
+
+Migration `CreateProductComments`: cria as tabelas `product_comment` (comentários, com `parent_id` apontando para o comentário respondido) e `product_comment_like` (curtidas), e o `down()` as remove.
+
+**Comentar e responder:** `POST /products/{id}/comments` com `{"content": "..."}`. Para responder um comentário, basta enviar também o `parent_id` do comentário respondido. Como toda resposta é um comentário com pai, qualquer comentário pode ser respondido, inclusive outra resposta.
+
+| Situação | Resposta |
+|---|---|
+| Comentário criado | `201 Created`, com o `id` do comentário |
+| Produto inexistente ou de outra empresa | `404 Not Found` |
+| `parent_id` inexistente ou de outro produto | `404 Not Found` |
+
+- Coberto por testes de feature.
+
 ### Problemas encontrados
 
 Bugs que não foram apontados pelo cliente, mas que encontrei durante o desenvolvimento.

@@ -5,6 +5,7 @@ use Contatoseguro\TesteBackend\Controller\CompanyController;
 use Contatoseguro\TesteBackend\Controller\HomeController;
 use Contatoseguro\TesteBackend\Controller\ProductController;
 use Contatoseguro\TesteBackend\Controller\ReportController;
+use Contatoseguro\TesteBackend\Controller\CommentController;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
@@ -22,6 +23,7 @@ $app->group('/products', function (RouteCollectorProxy $group) {
     $group->post('', [ProductController::class, 'insertOne']);
     $group->put('/{id}', [ProductController::class, 'updateOne']);
     $group->delete('/{id}', [ProductController::class, 'deleteOne']);
+    $group->post('/{id}/comments', [CommentController::class, 'insertOne']);
 });
 
 $app->group('/categories', function (RouteCollectorProxy $group) {
