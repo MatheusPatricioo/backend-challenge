@@ -200,7 +200,6 @@ Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplica
 ### Alterações
 
 #### Categorias
-#### Categorias
 
 **Categoria errada na listagem** (ex.: `blue trouser` como `phone`)
 - **Problema:** produtos apareciam com a categoria errada, e a listagem retornava apenas 6 dos 18 produtos.
@@ -224,3 +223,9 @@ Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplica
 - **Causa:** `ProductController::getOne()` buscava só a primeira categoria do produto (`fetch()`) e depois a consultava em `CategoryService::getOne()`, que filtra pela empresa do usuário. Como as categorias padrão têm `company_id` nulo, eram descartadas (no SQL, `NULL = 1` não é verdadeiro).
 - **Solução:** a busca individual passou a usar o mesmo `CategoryService::getByProductIds()` da listagem, que retorna todas as categorias do produto, inclusive as padrão. O método `getProductCategory()`, que ficou sem uso, foi removido. Coberto por testes de feature.
 - **Mudança na API:** assim como na listagem, o campo `category` foi substituído por `categories`.
+
+**Categorias padrão não apareciam nas rotas de categoria** *(encontrado ao investigar o item anterior)*
+- **Problema:** `GET /categories` não listava as categorias padrão (`clothing`, `phone`, `computer` e `house`), e `GET /categories/{id}` retornava vazio para elas, contrariando o requisito de que devem aparecer para todas as empresas.
+- **Causa:** `CategoryService::getAll()` e `getOne()` filtravam apenas `company_id = <empresa do usuário>`, descartando as categorias padrão, que têm `company_id` nulo.
+- **Solução:** as duas consultas passaram a aceitar também `company_id IS NULL`. Coberto por testes de feature, incluindo um que garante que categorias de outras empresas continuam ocultas.
+- **Decisão:** `updateOne()` e `deleteOne()` continuam restritos às categorias da própria empresa, então as categorias padrão podem ser vistas, mas não alteradas ou removidas por uma empresa, já que são compartilhadas entre todas.

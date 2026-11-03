@@ -35,4 +35,12 @@ abstract class FeatureTestCase extends TestCase
 
         return $productId;
     }
+
+    protected function createCategory(string $title, ?int $companyId = 1): int
+    {
+        $pdo = DB::connect();
+        $pdo->prepare('INSERT INTO category (company_id, title, active) VALUES (?, ?, 1)')->execute([$companyId, $title]);
+
+        return (int) $pdo->lastInsertId();
+    }
 }
