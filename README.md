@@ -200,4 +200,20 @@ Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplica
 ### Alterações
 
 #### Categorias
-- **Categoria errada na listagem (`blue trouser` como `phone`):** a query de `ProductService::getAll()` fazia o JOIN com `category` usando `pc.id` (o id da linha da tabela de ligação) em vez de `pc.cat_id`. Com isso, além das categorias erradas, a listagem retornava apenas 6 dos 18 produtos. Corrigi o JOIN e adicionei um teste de feature que reproduz o caso relatado.
+
+**Categoria errada na listagem** (ex.: `blue trouser` como `phone`)
+- **Problema:** produtos apareciam com a categoria errada, e a listagem retornava apenas 6 dos 18 produtos.
+- **Causa:** em `ProductService::getAll()`, o JOIN com `category` usava `pc.id` (o id da linha da tabela de ligação) em vez de `pc.cat_id`.
+- **Solução:** corrigi o JOIN para `pc.cat_id`. Coberto por teste de feature.
+
+**Produtos duplicados e categorias incompletas na listagem** *(encontrado ao corrigir o item anterior)*
+- **Problema:** produtos com mais de uma categoria apareciam duplicados na listagem, cada linha com só uma das categorias.
+- **Causa:** o JOIN com `category` gera uma linha por categoria do produto.
+- **Solução:** a listagem passou a buscar os produtos e, em uma segunda query, as categorias de todos eles de uma vez (`CategoryService::getByProductIds()`), evitando o problema de N+1. O relatório, que usa a mesma busca, também foi corrigido. Coberto por testes de feature.
+- **Mudança na API:** o campo `category` (texto) foi substituído por `categories` (lista):
+  ```json
+  "categories": [
+      { "id": 4, "title": "furniture" },
+      { "id": 6, "title": "house" }
+  ]
+  ```

@@ -20,4 +20,19 @@ abstract class FeatureTestCase extends TestCase
 
         $this->app = require __DIR__ . '/../../src/Config/app.php';
     }
+
+    protected function createProductWithCategories(array $categoryTitles): int
+    {
+        $pdo = DB::connect();
+
+        $pdo->exec("INSERT INTO product (company_id, title, price, active) VALUES (1, 'test product', 10, 1)");
+        $productId = (int) $pdo->lastInsertId();
+
+        foreach ($categoryTitles as $title) {
+            $pdo->prepare('INSERT INTO category (company_id, title, active) VALUES (1, ?, 1)')->execute([$title]);
+            $pdo->prepare('INSERT INTO product_category (product_id, cat_id) VALUES (?, ?)')->execute([$productId, $pdo->lastInsertId()]);
+        }
+
+        return $productId;
+    }
 }

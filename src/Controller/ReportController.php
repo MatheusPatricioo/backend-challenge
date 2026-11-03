@@ -32,9 +32,8 @@ class ReportController
             'Data de Criação',
             'Logs de Alterações'
         ];
-        
-        $stm = $this->productService->getAll($adminUserId);
-        $products = $stm->fetchAll();
+
+        $products = $this->productService->getAll($adminUserId);
 
         foreach ($products as $i => $product) {
             $stm = $this->companyService->getNameById($product->company_id);
@@ -47,7 +46,7 @@ class ReportController
             $data[$i+1][] = $companyName;
             $data[$i+1][] = $product->title;
             $data[$i+1][] = $product->price;
-            $data[$i+1][] = $product->category;
+            $data[$i+1][] = implode(', ', array_column($product->categories, 'title'));
             $data[$i+1][] = $product->created_at;
             $data[$i+1][] = $productLogs;
         }

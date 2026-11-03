@@ -7,26 +7,35 @@ use Contatoseguro\TesteBackend\Config\DB;
 class ProductService
 {
     private \PDO $pdo;
+    private CategoryService $categoryService;
+
     public function __construct()
     {
         $this->pdo = DB::connect();
+        $this->categoryService = new CategoryService();
     }
 
-    public function getAll($adminUserId)
+    public function getAll($adminUserId): array
     {
         $query = "
-            SELECT p.*, c.title as category
-            FROM product p
-            INNER JOIN product_category pc ON pc.product_id = p.id
-            INNER JOIN category c ON c.id = pc.cat_id
-            WHERE p.company_id = {$adminUserId}
+            SELECT *
+            FROM product
+            WHERE company_id = {$adminUserId}
+            ORDER BY id
         ";
 
         $stm = $this->pdo->prepare($query);
 
         $stm->execute();
 
-        return $stm;
+        $products = $stm->fetchAll();
+        $categoriesByProduct = $this->categoryService->getByProductIds(array_column($products, 'id'));
+
+        foreach ($products as $product) {
+            $product->categories = $categoriesByProduct[$product->id] ?? [];
+        }
+
+        return $products;
     }
 
     public function getOne($id)

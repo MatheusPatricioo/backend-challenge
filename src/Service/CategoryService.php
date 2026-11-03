@@ -61,6 +61,31 @@ class CategoryService
         return $stm;
     }
 
+    public function getByProductIds(array $productIds): array
+    {
+        if ($productIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($productIds), '?'));
+
+        $stm = $this->pdo->prepare("
+            SELECT pc.product_id, c.id, c.title
+            FROM product_category pc
+            INNER JOIN category c ON c.id = pc.cat_id
+            WHERE pc.product_id IN ({$placeholders})
+            ORDER BY c.id
+        ");
+        $stm->execute($productIds);
+
+        $categoriesByProduct = [];
+        foreach ($stm->fetchAll() as $row) {
+            $categoriesByProduct[$row->product_id][] = ['id' => $row->id, 'title' => $row->title];
+        }
+
+        return $categoriesByProduct;
+    }
+
     public function insertOne($body, $adminUserId)
     {
         $stm = $this->pdo->prepare("
