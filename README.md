@@ -236,3 +236,21 @@ Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplica
 - **Problema:** `GET /products` retornava lista vazia para qualquer usuário além do 1, mesmo sendo da mesma empresa.
 - **Causa:** `ProductService::getAll()` comparava o `company_id` do produto com o id do usuário (`WHERE company_id = {$adminUserId}`), o que só funcionava porque o usuário 1 pertence à empresa 1.
 - **Solução:** a consulta passou a buscar a empresa do usuário em `admin_user`. O relatório, que usa a mesma busca, também foi corrigido. Coberto por testes de feature, incluindo um que garante que produtos de outras empresas continuam ocultos.
+
+#### Logs
+
+**Quem alterou o preço do `iphone 8` por último?**
+
+```sql
+SELECT pl.id, pl.admin_user_id, au.name, pl.action, pl.timestamp
+FROM product_log pl
+LEFT JOIN admin_user au ON au.id = pl.admin_user_id
+WHERE pl.product_id = 4
+ORDER BY pl.timestamp, pl.id;
+```
+
+A última alteração no produto foi feita pela usuária **corin** (id 3), em 22/12/2023 às 18:12:10.
+
+Porém, o log registra apenas o tipo da ação (`create`, `update`, `delete`), e não quais campos foram alterados. Por isso, não é possível afirmar que essa alteração foi no preço, apenas que ela foi a última a alterar o produto. Para responder com precisão, o log precisaria guardar os valores anteriores e novos de cada campo alterado.
+
+Observação: o histórico do produto contém dois registros de criação no mesmo instante, um deles atribuído a um usuário inexistente (id 6), o que indica inconsistência nos dados de log.
