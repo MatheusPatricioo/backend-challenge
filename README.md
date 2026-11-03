@@ -229,3 +229,10 @@ Adicionei testes de feature (`tests/Feature`), que fazem requisições à aplica
 - **Causa:** `CategoryService::getAll()` e `getOne()` filtravam apenas `company_id = <empresa do usuário>`, descartando as categorias padrão, que têm `company_id` nulo.
 - **Solução:** as duas consultas passaram a aceitar também `company_id IS NULL`. Coberto por testes de feature, incluindo um que garante que categorias de outras empresas continuam ocultas.
 - **Decisão:** `updateOne()` e `deleteOne()` continuam restritos às categorias da própria empresa, então as categorias padrão podem ser vistas, mas não alteradas ou removidas por uma empresa, já que são compartilhadas entre todas.
+
+#### Produtos
+
+**Listagem vazia para usuários diferentes do usuário 1** *(encontrado durante a investigação)*
+- **Problema:** `GET /products` retornava lista vazia para qualquer usuário além do 1, mesmo sendo da mesma empresa.
+- **Causa:** `ProductService::getAll()` comparava o `company_id` do produto com o id do usuário (`WHERE company_id = {$adminUserId}`), o que só funcionava porque o usuário 1 pertence à empresa 1.
+- **Solução:** a consulta passou a buscar a empresa do usuário em `admin_user`. O relatório, que usa a mesma busca, também foi corrigido. Coberto por testes de feature, incluindo um que garante que produtos de outras empresas continuam ocultos.

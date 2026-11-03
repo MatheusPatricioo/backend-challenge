@@ -43,4 +43,12 @@ abstract class FeatureTestCase extends TestCase
 
         return (int) $pdo->lastInsertId();
     }
+
+    protected function createAdminUser(int $companyId): int
+    {
+        $pdo = DB::connect();
+        $pdo->prepare("INSERT INTO admin_user (company_id, email, name) VALUES (?, 'test@test.com', 'test user')")->execute([$companyId]);
+
+        return (int) $pdo->lastInsertId();
+    }
 }

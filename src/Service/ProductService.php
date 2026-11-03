@@ -20,7 +20,7 @@ class ProductService
         $query = "
             SELECT *
             FROM product
-            WHERE company_id = {$adminUserId}
+            WHERE company_id = (SELECT company_id FROM admin_user WHERE id = {$adminUserId})
             ORDER BY id
         ";
 

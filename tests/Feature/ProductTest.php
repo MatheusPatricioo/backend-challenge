@@ -24,6 +24,26 @@ class ProductTest extends FeatureTestCase
         $this->assertSame(['furniture', 'house'], array_column($categories, 'title'));
     }
 
+    public function testListingProductsShowsProductsOfTheUsersCompany(): void
+    {
+        $productId = $this->createProductWithCategories(['furniture']);
+        $userId = $this->createAdminUser(companyId: 1);
+
+        $listedIds = array_column($this->listProducts($userId), 'id');
+
+        $this->assertContains($productId, $listedIds);
+    }
+
+    public function testListingProductsHidesProductsOfOtherCompanies(): void
+    {
+        $productId = $this->createProductWithCategories(['furniture']);
+        $userId = $this->createAdminUser(companyId: 2);
+
+        $listedIds = array_column($this->listProducts($userId), 'id');
+
+        $this->assertNotContains($productId, $listedIds);
+    }
+
     public function testShowingAProductShowsAllItsCategories(): void
     {
         $productId = $this->createProductWithCategories(['furniture', 'house']);
@@ -42,11 +62,11 @@ class ProductTest extends FeatureTestCase
         $this->assertSame(['phone'], array_column($product['categories'], 'title'));
     }
 
-    private function listProducts(): array
+    private function listProducts(int $adminUserId = 1): array
     {
         $request = (new ServerRequestFactory())
             ->createServerRequest('GET', '/products')
-            ->withHeader('admin_user_id', '1');
+            ->withHeader('admin_user_id', (string) $adminUserId);
 
         return json_decode((string) $this->app->handle($request)->getBody(), true);
     }
