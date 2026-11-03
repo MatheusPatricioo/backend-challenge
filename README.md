@@ -188,6 +188,7 @@ Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.s
 
 #### Coleção do Postman
 A coleção em `docs/postman-api.json` não funcionava ao ser importada: as variáveis usavam a sintaxe do Insomnia (`{{ _.base_url }}`) em vez da do Postman (`{{base_url}}`), e as URLs terminavam com `/`, o que não corresponde às rotas do Slim nem à documentação em `docs/api-docs.pdf`. Corrigi as duas coisas.
+A coleção também foi atualizada com as novas funcionalidades: a rota de cadastro de traduções (`categories → insertTranslations`), os parâmetros de filtro, ordenação e idioma (incluídos desmarcados nas requisições de busca, com descrição) e o campo `stock` no cadastro e na edição de produtos.
 
 ### Testes
 Além dos testes unitários existentes, adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta.

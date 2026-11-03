@@ -75,6 +75,38 @@
 							"raw": "{{base_url}}{{products}}",
 							"host": [
 								"{{base_url}}{{products}}"
+							],
+							"query": [
+								{
+									"key": "active",
+									"value": "1",
+									"description": "1/true para ativos, 0/false para inativos",
+									"disabled": true
+								},
+								{
+									"key": "category_id",
+									"value": "4",
+									"description": "Apenas produtos da categoria",
+									"disabled": true
+								},
+								{
+									"key": "sort",
+									"value": "-created_at",
+									"description": "created_at (mais antigos primeiro) ou -created_at (mais novos primeiro)",
+									"disabled": true
+								},
+								{
+									"key": "min_stock",
+									"value": "5",
+									"description": "Estoque maior ou igual ao valor",
+									"disabled": true
+								},
+								{
+									"key": "lang",
+									"value": "pt",
+									"description": "Idioma das categorias (fallback: inglês)",
+									"disabled": true
+								}
 							]
 						}
 					},
@@ -111,6 +143,14 @@
 							],
 							"path": [
 								"10"
+							],
+							"query": [
+								{
+									"key": "lang",
+									"value": "pt",
+									"description": "Idioma das categorias (fallback: inglês)",
+									"disabled": true
+								}
 							]
 						}
 					},
@@ -146,7 +186,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"company_id\": 1,\n\t\"title\": \"nome do produto\",\n\t\"price\": 123.4,\n\t\"active\": true,\n\t\"category_id\": 1\n}",
+							"raw": "{\n\t\"company_id\": 1,\n\t\"title\": \"nome do produto\",\n\t\"price\": 123.4,\n\t\"active\": true,\n\t\"category_id\": 1,\n\t\"stock\": 10\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -192,7 +232,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"company_id\": 1,\n\t\"title\": \"nome do produto\",\n\t\"price\": 123.4,\n\t\"active\": true,\n\t\"category_id\": 1\n}",
+							"raw": "{\n\t\"company_id\": 1,\n\t\"title\": \"nome do produto\",\n\t\"price\": 123.4,\n\t\"active\": true,\n\t\"category_id\": 1,\n\t\"stock\": 10\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -280,6 +320,14 @@
 							"raw": "{{base_url}}{{categories}}",
 							"host": [
 								"{{base_url}}{{categories}}"
+							],
+							"query": [
+								{
+									"key": "lang",
+									"value": "pt",
+									"description": "Idioma das categorias (fallback: inglês)",
+									"disabled": true
+								}
 							]
 						}
 					},
@@ -316,6 +364,14 @@
 							],
 							"path": [
 								"4"
+							],
+							"query": [
+								{
+									"key": "lang",
+									"value": "pt",
+									"description": "Idioma das categorias (fallback: inglês)",
+									"disabled": true
+								}
 							]
 						}
 					},
@@ -362,6 +418,55 @@
 							"raw": "{{base_url}}{{categories}}",
 							"host": [
 								"{{base_url}}{{categories}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "insertTranslations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": []
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"followRedirects": true,
+						"disableUrlEncoding": false,
+						"disableCookies": false
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "admin_user_id",
+								"value": "1"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"translations\": [\n\t\t{\n\t\t\t\"lang_code\": \"en\",\n\t\t\t\"label\": \"home\"\n\t\t},\n\t\t{\n\t\t\t\"lang_code\": \"pt\",\n\t\t\t\"label\": \"casa\"\n\t\t}\n\t]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}{{categories}}/6",
+							"host": [
+								"{{base_url}}{{categories}}"
+							],
+							"path": [
+								"6"
 							]
 						}
 					},
