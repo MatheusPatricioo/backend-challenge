@@ -22,7 +22,13 @@ class ProductLogRepository implements ProductLogRepositoryInterface
 
     public function getByProductId($productId): array
     {
-        $stm = $this->pdo->prepare('SELECT * FROM product_log WHERE product_id = :product_id');
+        $stm = $this->pdo->prepare('
+    SELECT pl.*, au.name AS admin_user_name
+    FROM product_log pl
+    LEFT JOIN admin_user au ON au.id = pl.admin_user_id
+    WHERE pl.product_id = :product_id
+    ORDER BY pl.timestamp, pl.id
+    ');
         $stm->execute(['product_id' => $productId]);
 
         return $stm->fetchAll();

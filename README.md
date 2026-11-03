@@ -233,14 +233,19 @@ Os métodos citados nesta seção se referem ao código no momento de cada corre
 - **Decisão:** `updateOne()` e `deleteOne()` continuam restritos às categorias da própria empresa, então as categorias padrão podem ser vistas, mas não alteradas ou removidas por uma empresa, já que são compartilhadas entre todas.
 
 #### Produtos
-
 **Listagem vazia para usuários diferentes do usuário 1** *(encontrado durante a investigação)*
 - **Problema:** `GET /products` retornava lista vazia para qualquer usuário além do 1, mesmo sendo da mesma empresa.
 - **Causa:** `ProductService::getAll()` comparava o `company_id` do produto com o id do usuário (`WHERE company_id = {$adminUserId}`), o que só funcionava porque o usuário 1 pertence à empresa 1.
 - **Solução:** a consulta passou a buscar a empresa do usuário em `admin_user`. O relatório, que usa a mesma busca, também foi corrigido. Coberto por testes de feature, incluindo um que garante que produtos de outras empresas continuam ocultos.
 
-#### Logs
+#### Relatório
+**Coluna de logs mostrando `Array`**
+- **Problema:** a coluna "Logs de Alterações" mostrava `Array` e gerava warnings de `Array to string conversion`.
+- **Causa:** a lista de logs do produto era inserida diretamente na célula da tabela, sem ser convertida em texto.
+- **Solução:** os logs passaram a ser exibidos no formato pedido, `(Nome do usuário, Tipo de alteração, Data)`, um por linha e em ordem cronológica. As ações são traduzidas (`create` → Criação, `update` → Atualização, `delete` → Remoção) e a data é exibida em `dd/mm/aaaa hh:mm:ss`. Coberto por testes de feature.
+- **Decisão:** logs de usuários inexistentes (como o usuário 6, presente nos dados) aparecem como `Usuário desconhecido`, em vez de sumirem do relatório.
 
+#### Logs
 **Quem alterou o preço do `iphone 8` por último?**
 
 ```sql
@@ -258,11 +263,9 @@ Porém, o log registra apenas o tipo da ação (`create`, `update`, `delete`), e
 Observação: o histórico do produto contém dois registros de criação no mesmo instante, um deles atribuído a um usuário inexistente (id 6), o que indica inconsistência nos dados de log.
 
 ### Refatoração
-
 Tratei o projeto como um sistema legado: em vez de reescrever tudo, refatorei de forma incremental apenas o que trazia ganho concreto, sempre protegido pelos testes de feature, que passaram sem nenhuma alteração após cada etapa.
 
 #### Camada de repositories
-
 O acesso ao banco estava misturado às regras de negócio nos services, com valores interpolados diretamente nas queries, o que deixava a aplicação vulnerável a SQL injection. Separei as responsabilidades em camadas:
 - **Controller:** recebe a requisição e devolve a resposta.
 - **Service:** orquestra as regras de negócio.
@@ -273,7 +276,7 @@ Repositories criados:
 - `ProductRepository`: tabelas `product` e `product_category`.
 - `ProductLogRepository`: tabela `product_log`.
 - `AdminUserRepository`: único ponto que resolve a empresa do usuário, antes repetido nos services.
-- - `CompanyRepository`: tabela `company`. O `CompanyController` fazia as queries diretamente, sem passar por um service.
+- `CompanyRepository`: tabela `company`. O `CompanyController` fazia as queries diretamente, sem passar por um service.
 
 Além de eliminar o SQL injection, os prepared statements corrigiram dois erros: títulos com apóstrofo e registros com `"active": false`, que antes quebravam a query, passaram a ser salvos corretamente.
 
@@ -281,6 +284,5 @@ Além de eliminar o SQL injection, os prepared statements corrigiram dois erros:
 
 **Sem container de injeção de dependência:** as dependências são montadas manualmente nos controllers. Com poucos controllers, um container adicionaria mais infraestrutura do que resolveria.
 
-#### Relatório
-
+#### Separação do relatório
 O `ReportController` buscava os dados, montava as linhas do relatório e gerava o HTML. Separei essas responsabilidades seguindo o padrão Controller → Service que o projeto já usa: o `ReportService` monta os dados e a `HtmlTable` (`src/View`) gera o HTML, deixando o controller apenas com a requisição e a resposta.

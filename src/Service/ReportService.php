@@ -4,6 +4,12 @@ namespace Contatoseguro\TesteBackend\Service;
 
 class ReportService
 {
+    private const ACTIONS = [
+        'create' => 'Criação',
+        'update' => 'Atualização',
+        'delete' => 'Remoção',
+    ];
+
     public function __construct(
         private ProductService $productService,
         private CompanyService $companyService
@@ -36,9 +42,21 @@ class ReportService
             $data[$i+1][] = $product->price;
             $data[$i+1][] = implode(', ', array_column($product->categories, 'title'));
             $data[$i+1][] = $product->created_at;
-            $data[$i+1][] = $productLogs;
+            $data[$i+1][] = $this->formatLogs($productLogs);
         }
 
         return $data;
+    }
+
+    private function formatLogs(array $logs): string
+    {
+        $lines = array_map(fn ($log) => sprintf(
+            '(%s, %s, %s)',
+            $log->admin_user_name ?? 'Usuário desconhecido',
+            self::ACTIONS[$log->action],
+            (new \DateTime($log->timestamp))->format('d/m/Y H:i:s')
+        ), $logs);
+
+        return implode(",\n", $lines);
     }
 }
