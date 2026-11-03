@@ -42,4 +42,9 @@ class CategoryService
     {
         return $this->categoryRepository->deleteOne($id, $this->adminUserRepository->getCompanyId($adminUserId));
     }
+
+    public function insertTranslations($categoryId, array $translations): bool
+    {
+        return $this->categoryRepository->insertTranslations($categoryId, $translations);
+    }
 }

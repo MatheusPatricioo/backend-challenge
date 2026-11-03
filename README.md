@@ -287,6 +287,23 @@ Migration `AddStockToProducts`: adiciona a coluna `stock` à tabela `product`, c
 - **Decisão:** no `PUT`, o campo `stock` é opcional e, quando não enviado, o estoque atual é mantido (`COALESCE` no SQL). Assim, clientes que já editam produtos sem esse campo não zeram o estoque sem perceber.
 - Coberto por testes de feature, um por regra, além de um que garante que o `PUT` sem `stock` mantém o valor atual.
 
+#### Traduções
+
+Migration `CreateCategoryTranslations`: cria a tabela `category_translation`, com uma linha por categoria e idioma, e o `down()` a remove. Uma tabela própria permite cadastrar qualquer idioma sem novas alterações no banco.
+
+**Cadastro:** `POST /categories/{id}`, seguindo o contrato do enunciado.
+
+| Situação | Resposta |
+|---|---|
+| Traduções salvas | `201 Created` |
+| Algum idioma repetido, na própria requisição ou já cadastrado para a categoria | `409 Conflict`, e nenhuma tradução é salva |
+| Categoria inexistente ou de outra empresa | `404 Not Found` |
+
+- A regra de não repetir é garantida pelo banco, com um índice único em `(category_id, lang_code)`. As traduções são inseridas em uma transação: se qualquer uma for recusada, o `rollback` desfaz as demais.
+- As categorias padrão também podem ser traduzidas, já que o próprio exemplo do enunciado (`home`/`casa`) corresponde à categoria padrão `house`.
+- A rota segue o contrato definido pelo cliente (`POST /categories/:id`), embora uma rota como `POST /categories/:id/translations` fosse mais próxima do padrão REST.
+- Coberto por testes de feature.
+
 ### Problemas encontrados
 
 Bugs que não foram apontados pelo cliente, mas que encontrei durante o desenvolvimento.

@@ -102,4 +102,30 @@ class CategoryRepository implements CategoryRepositoryInterface
 
         return $stm->execute(['id' => $id, 'company_id' => $companyId]);
     }
+
+    public function insertTranslations($categoryId, array $translations): bool
+    {
+        $stm = $this->pdo->prepare('
+            INSERT INTO category_translation (category_id, lang_code, label)
+            VALUES (:category_id, :lang_code, :label)
+        ');
+
+        $this->pdo->beginTransaction();
+
+        try {
+            foreach ($translations as $translation) {
+                $stm->execute([
+                    'category_id' => $categoryId,
+                    'lang_code' => $translation['lang_code'],
+                    'label' => $translation['label'],
+                ]);
+            }
+        } catch (\PDOException) {
+            $this->pdo->rollBack();
+
+            return false;
+        }
+
+        return $this->pdo->commit();
+    }
 }

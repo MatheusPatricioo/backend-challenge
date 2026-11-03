@@ -15,4 +15,6 @@ interface CategoryRepositoryInterface
     public function updateOne($id, $body, $companyId);
 
     public function deleteOne($id, $companyId);
+
+    public function insertTranslations($categoryId, array $translations): bool;
 }

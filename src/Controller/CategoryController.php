@@ -71,4 +71,19 @@ class CategoryController
             return $response->withStatus(404);
         }
     }
+
+    public function insertTranslations(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $adminUserId = $request->getHeader('admin_user_id')[0];
+
+        if (!$this->service->getOne($adminUserId, $args['id'])) {
+            return $response->withStatus(404);
+        }
+
+        if (!$this->service->insertTranslations($args['id'], $request->getParsedBody()['translations'])) {
+            return $response->withStatus(409);
+        }
+
+        return $response->withStatus(201);
+    }
 }
