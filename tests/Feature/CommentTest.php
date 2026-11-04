@@ -7,6 +7,7 @@ use ContatoSeguro\Tests\Factories\CommentFactory;
 use ContatoSeguro\Tests\Factories\ProductFactory;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
+use ContatoSeguro\Tests\Factories\CommentLikeFactory;
 
 class CommentTest extends FeatureTestCase
 {
@@ -50,6 +51,40 @@ class CommentTest extends FeatureTestCase
 
         $this->assertSame(404, $response->getStatusCode());
         $this->assertSame([], $this->commentsOf($productId));
+    }
+
+    public function testLikingACommentCountsTheLike(): void
+    {
+        $productId = ProductFactory::create();
+        $commentId = CommentFactory::create(['product_id' => $productId]);
+
+        $response = $this->likeComment($commentId);
+
+        $comments = json_decode((string) $this->listComments($productId)->getBody(), true);
+        $this->assertSame(201, $response->getStatusCode());
+        $this->assertSame(1, $comments[0]['likes']);
+    }
+
+    public function testLikingACommentTwiceReturnsConflict(): void
+    {
+        $productId = ProductFactory::create();
+        $commentId = CommentFactory::create(['product_id' => $productId]);
+        CommentLikeFactory::create(['comment_id' => $commentId]);
+
+        $response = $this->likeComment($commentId);
+
+        $comments = json_decode((string) $this->listComments($productId)->getBody(), true);
+        $this->assertSame(409, $response->getStatusCode());
+        $this->assertSame(1, $comments[0]['likes']);
+    }
+
+    public function testLikingACommentOnAProductOfAnotherCompanyReturnsNotFound(): void
+    {
+        $commentId = CommentFactory::create(['product_id' => ProductFactory::create(['company_id' => 2])]);
+
+        $response = $this->likeComment($commentId);
+
+        $this->assertSame(404, $response->getStatusCode());
     }
 
     private function postComment(int $productId, array $body): ResponseInterface
@@ -140,6 +175,15 @@ class CommentTest extends FeatureTestCase
     {
         $request = (new ServerRequestFactory())
             ->createServerRequest('DELETE', "/comments/{$commentId}")
+            ->withHeader('admin_user_id', '1');
+
+        return $this->app->handle($request);
+    }
+
+    private function likeComment(int $commentId): ResponseInterface
+    {
+        $request = (new ServerRequestFactory())
+            ->createServerRequest('POST', "/comments/{$commentId}/likes")
             ->withHeader('admin_user_id', '1');
 
         return $this->app->handle($request);

@@ -23,7 +23,8 @@ class CommentRepository implements CommentRepositoryInterface
         $stm = $this->pdo->prepare('
             SELECT pc.id, pc.parent_id, au.name AS user,
                 CASE WHEN pc.deleted_at IS NULL THEN pc.content END AS content,
-                pc.created_at, pc.deleted_at
+                pc.created_at, pc.deleted_at,
+                (SELECT COUNT(*) FROM product_comment_like l WHERE l.comment_id = pc.id) AS likes
             FROM product_comment pc
             LEFT JOIN admin_user au ON au.id = pc.admin_user_id
             WHERE pc.product_id = :product_id
@@ -47,7 +48,7 @@ class CommentRepository implements CommentRepositoryInterface
             'content' => $content,
         ]);
 
-        return (int)$this->pdo->lastInsertId();
+        return (int) $this->pdo->lastInsertId();
     }
 
     public function deleteOne($id, $adminUserId): bool
@@ -62,5 +63,19 @@ class CommentRepository implements CommentRepositoryInterface
         $stm->execute(['id' => $id, 'admin_user_id' => $adminUserId]);
 
         return $stm->rowCount() === 1;
+    }
+
+    public function insertLike($commentId, $adminUserId): bool
+    {
+        $stm = $this->pdo->prepare('
+            INSERT INTO product_comment_like (comment_id, admin_user_id)
+            VALUES (:comment_id, :admin_user_id)
+        ');
+
+        try {
+            return $stm->execute(['comment_id' => $commentId, 'admin_user_id' => $adminUserId]);
+        } catch (\PDOException) {
+            return false;
+        }
     }
 }

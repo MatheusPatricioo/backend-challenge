@@ -2,6 +2,8 @@
 
 namespace Contatoseguro\TesteBackend\Service;
 
+use Contatoseguro\TesteBackend\Exception\ConflictException;
+use Contatoseguro\TesteBackend\Exception\NotFoundException;
 use Contatoseguro\TesteBackend\Repository\Contracts\AdminUserRepositoryInterface;
 use Contatoseguro\TesteBackend\Repository\Contracts\CommentRepositoryInterface;
 use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
@@ -15,45 +17,62 @@ class CommentService
     ) {
     }
 
-    public function getAll($adminUserId, int $productId): ?array
+    public function getAll($adminUserId, int $productId): array
     {
-        if (!$this->productBelongsToUser($adminUserId, $productId)) {
-            return null;
-        }
+        $this->ensureProductBelongsToUser($adminUserId, $productId);
 
         return $this->buildHierarchy($this->commentRepository->getByProductId($productId));
     }
 
-    public function insertOne($adminUserId, int $productId, string $content, ?int $parentId): ?int
+    public function insertOne($adminUserId, int $productId, string $content, ?int $parentId): int
     {
-        if (!$this->productBelongsToUser($adminUserId, $productId)) {
-            return null;
-        }
+        $this->ensureProductBelongsToUser($adminUserId, $productId);
 
-        if ($parentId !== null && !$this->commentBelongsToProduct($parentId, $productId)) {
-            return null;
+        if ($parentId !== null) {
+            $this->ensureCommentBelongsToProduct($parentId, $productId);
         }
 
         return $this->commentRepository->insertOne($productId, $adminUserId, $content, $parentId);
     }
 
-    public function deleteOne($adminUserId, int $commentId): bool
+    public function deleteOne($adminUserId, int $commentId): void
     {
-        return $this->commentRepository->deleteOne($commentId, $adminUserId);
+        if (!$this->commentRepository->deleteOne($commentId, $adminUserId)) {
+            throw new NotFoundException('Comment not found.');
+        }
     }
 
-    private function productBelongsToUser($adminUserId, int $productId): bool
-    {
-        $product = $this->productRepository->getOne($productId);
-
-        return $product && $product->company_id === $this->adminUserRepository->getCompanyId($adminUserId);
-    }
-
-    private function commentBelongsToProduct($commentId, int $productId): bool
+    public function likeOne($adminUserId, int $commentId): void
     {
         $comment = $this->commentRepository->getOne($commentId);
 
-        return $comment && $comment->product_id === $productId;
+        if (!$comment) {
+            throw new NotFoundException('Comment not found.');
+        }
+
+        $this->ensureProductBelongsToUser($adminUserId, $comment->product_id);
+
+        if (!$this->commentRepository->insertLike($commentId, $adminUserId)) {
+            throw new ConflictException('Comment already liked.');
+        }
+    }
+
+    private function ensureProductBelongsToUser($adminUserId, int $productId): void
+    {
+        $product = $this->productRepository->getOne($productId);
+
+        if (!$product || $product->company_id !== $this->adminUserRepository->getCompanyId($adminUserId)) {
+            throw new NotFoundException('Product not found.');
+        }
+    }
+
+    private function ensureCommentBelongsToProduct(int $commentId, int $productId): void
+    {
+        $comment = $this->commentRepository->getOne($commentId);
+
+        if (!$comment || $comment->product_id !== $productId) {
+            throw new NotFoundException('Comment not found.');
+        }
     }
 
     private function buildHierarchy(array $allComments, ?int $parentId = null): array

@@ -31,10 +31,6 @@ class CommentController
 
         $comments = $this->service->getAll($adminUserId, (int) $args['id']);
 
-        if ($comments === null) {
-            return $response->withStatus(404);
-        }
-
         $response->getBody()->write(json_encode($comments));
         return $response->withStatus(200);
     }
@@ -46,10 +42,6 @@ class CommentController
 
         $commentId = $this->service->insertOne($adminUserId, (int) $args['id'], $body['content'], $body['parent_id'] ?? null);
 
-        if ($commentId === null) {
-            return $response->withStatus(404);
-        }
-
         $response->getBody()->write(json_encode(['id' => $commentId]));
         return $response->withStatus(201);
     }
@@ -58,10 +50,17 @@ class CommentController
     {
         $adminUserId = $request->getHeader('admin_user_id')[0];
 
-        if (!$this->service->deleteOne($adminUserId, (int) $args['id'])) {
-            return $response->withStatus(404);
-        }
+        $this->service->deleteOne($adminUserId, (int) $args['id']);
 
         return $response->withStatus(204);
+    }
+
+    public function likeOne(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $adminUserId = $request->getHeader('admin_user_id')[0];
+
+        $this->service->likeOne($adminUserId, (int) $args['id']);
+
+        return $response->withStatus(201);
     }
 }
