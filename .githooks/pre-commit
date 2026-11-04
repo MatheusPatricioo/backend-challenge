@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+#
+# Roda a pipeline de validação antes de cada commit.
+# Para pular em uma emergência: git commit --no-verify
+
+docker compose exec -T app bash check_deploy.sh
