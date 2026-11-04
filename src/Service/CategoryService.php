@@ -2,6 +2,8 @@
 
 namespace Contatoseguro\TesteBackend\Service;
 
+use Contatoseguro\TesteBackend\Exception\ConflictException;
+use Contatoseguro\TesteBackend\Exception\NotFoundException;
 use Contatoseguro\TesteBackend\Repository\Contracts\AdminUserRepositoryInterface;
 use Contatoseguro\TesteBackend\Repository\Contracts\CategoryRepositoryInterface;
 
@@ -43,8 +45,14 @@ class CategoryService
         return $this->categoryRepository->deleteOne($id, $this->adminUserRepository->getCompanyId($adminUserId));
     }
 
-    public function insertTranslations($categoryId, array $translations): bool
+    public function insertTranslations($adminUserId, $categoryId, array $translations): void
     {
-        return $this->categoryRepository->insertTranslations($categoryId, $translations);
+        if (!$this->getOne($adminUserId, $categoryId)) {
+            throw new NotFoundException('Category not found.');
+        }
+
+        if (!$this->categoryRepository->insertTranslations($categoryId, $translations)) {
+            throw new ConflictException('Repeated translation.');
+        }
     }
 }
