@@ -188,7 +188,7 @@ Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.s
 
 #### Coleção do Postman
 A coleção em `docs/postman-api.json` não funcionava ao ser importada: as variáveis usavam a sintaxe do Insomnia (`{{ _.base_url }}`) em vez da do Postman (`{{base_url}}`), e as URLs terminavam com `/`, o que não corresponde às rotas do Slim nem à documentação em `docs/api-docs.pdf`. Corrigi as duas coisas.
-A coleção também foi atualizada com as novas funcionalidades: a rota de cadastro de traduções (`categories → insertTranslations`), os parâmetros de filtro, ordenação e idioma (incluídos desmarcados nas requisições de busca, com descrição) e o campo `stock` no cadastro e na edição de produtos.
+A coleção também foi atualizada com as novas funcionalidades: a rota de cadastro de traduções (`categories → insertTranslations`), os parâmetros de filtro, ordenação e idioma (incluídos desmarcados nas requisições de busca, com descrição), o campo `stock` no cadastro e na edição de produtos, e a pasta `comments`, com as requisições na ordem de uma conversa de exemplo.
 
 ### Testes
 Além dos testes unitários existentes, adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta.
@@ -331,6 +331,18 @@ Migration `CreateProductComments`: cria as tabelas `product_comment` (comentári
 
 - Coberto por testes de feature.
 
+**Curtir:** `POST /comments/{id}/likes`.
+
+| Situação | Resposta |
+|---|---|
+| Curtida registrada | `201 Created` |
+| O usuário já curtiu o comentário | `409 Conflict` |
+| Comentário inexistente ou de um produto de outra empresa | `404 Not Found` |
+
+- Cada usuário pode curtir um comentário uma única vez, regra garantida por um índice único em `(comment_id, admin_user_id)`.
+- A listagem exibe a quantidade de curtidas de cada comentário (`likes`), calculada na mesma consulta.
+- Coberto por testes de feature.
+
 **Remover o próprio comentário:** `DELETE /comments/{id}`.
 
 | Situação | Resposta |
@@ -407,3 +419,6 @@ Repositories criados:
 
 #### Separação do relatório
 O `ReportController` buscava os dados, montava as linhas do relatório e gerava o HTML. Separei essas responsabilidades seguindo o padrão Controller → Service que o projeto já usa: o `ReportService` monta os dados e a `HtmlTable` (`src/View`) gera o HTML, deixando o controller apenas com a requisição e a resposta.
+
+#### Tratamento de erros
+Os services lançam exceções com o nome da regra violada (`NotFoundException`, `ConflictException`), e um middleware (`ExceptionMiddleware`) as converte nas respostas `404` e `409`, com a mensagem em JSON (por exemplo, `{"message": "Comment not found."}`). Assim os controllers ficam apenas com o fluxo de sucesso, e a tradução de erros para HTTP fica em um único lugar. Exceções de outros tipos não são capturadas, para que erros inesperados não sejam mascarados.
