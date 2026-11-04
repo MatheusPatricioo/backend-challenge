@@ -176,6 +176,7 @@ As seções seguem a ordem do enunciado: primeiro o ambiente e os testes, depois
 
 ### Ambiente
 
+#### Docker
 ```bash
 docker compose up -d --build                                       # sobe a aplicação em localhost:8000
 docker compose exec app composer migrate                           # executa as migrations
@@ -187,13 +188,21 @@ docker compose exec app composer lint                              # verifica o 
 docker compose exec app composer lint:fix                          # corrige automaticamente o que for possível
 docker compose exec app composer analyse                           # análise estática (PHPStan, nível 5)
 docker compose exec app bash check_deploy.sh                       # valida tudo (composer, lint, análise e testes) antes de produção
+git config core.hooksPath .githooks                                # (uma vez) roda o check_deploy.sh antes de cada commit
 ```
 Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.sqlite3`. Depois de subir o container, rode as migrations para aplicar as mudanças de banco das novas funcionalidades. O comando de reverter migrations no `composer.json` se chama `rollback-migration`, e não `rollback` como indicado no enunciado.
 
+#### Qualidade de código
+- **Linter:** PHP_CodeSniffer com o padrão PSR-12 (`phpcs.xml.dist`), aplicado ao código, aos testes e às migrations. Linhas acima de 120 caracteres geram apenas avisos, já que o PSR-12 trata esse limite como recomendação, e quase todas são assinaturas de controllers do Slim.
+- **Análise estática:** PHPStan no nível 5 (`phpstan.neon.dist`), sem erros pendentes. Os níveis acima exigem tipos declarados em todos os parâmetros e retornos, o que o código original não tem. A análise encontrou um tipo de retorno incorreto no `JsonResponseMiddleware`, que foi corrigido. A única exceção configurada são as rotas, onde o PHPStan não reconhece a forma como o Slim instancia os controllers.
+- **Pipeline:** o `check_deploy.sh` executa, em sequência, a validação do `composer.json` e do `composer.lock`, o linter, a análise estática e todos os testes (unitários e de feature), e para na primeira etapa que falhar.
+- **Antes de cada commit:** a mesma pipeline roda pelo hook em `.githooks/pre-commit`, ativado uma vez com `git config core.hooksPath .githooks`. O container precisa estar em execução.
+- **Quebras de linha:** o `.gitattributes` e o `.editorconfig` garantem o padrão LF em qualquer sistema operacional, o que evita falhas no linter e no script em ambientes Windows.
+
 #### Coleção do Postman
 A coleção em `docs/postman-api.json` não funcionava ao ser importada: as variáveis usavam a sintaxe do Insomnia (`{{ _.base_url }}`) em vez da do Postman (`{{base_url}}`), e as URLs terminavam com `/`, o que não corresponde às rotas do Slim nem à documentação em `docs/api-docs.pdf`. Corrigi as duas coisas.
-A coleção também foi atualizada com as novas funcionalidades: a rota de cadastro de traduções (`categories → insertTranslations`), os parâmetros de filtro, ordenação e idioma (incluídos desmarcados nas requisições de busca, com descrição), o campo `stock` no cadastro e na edição de produtos, e a pasta `comments`, com as requisições na ordem de uma conversa de exemplo.
 
+A coleção também foi atualizada com as novas funcionalidades: a rota de cadastro de traduções (`categories → insertTranslations`), os parâmetros de filtro, ordenação e idioma (incluídos desmarcados nas requisições de busca, com descrição), o campo `stock` no cadastro e na edição de produtos, e a pasta `comments`, com as requisições na ordem de uma conversa de exemplo.
 ### Testes
 Além dos testes unitários existentes, adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta.
 - Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, com as migrations aplicadas, então o banco real nunca é alterado e os testes usam a mesma estrutura de banco da aplicação. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
