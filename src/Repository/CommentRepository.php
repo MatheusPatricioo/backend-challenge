@@ -70,12 +70,10 @@ class CommentRepository implements CommentRepositoryInterface
         $stm = $this->pdo->prepare('
             INSERT INTO product_comment_like (comment_id, admin_user_id)
             VALUES (:comment_id, :admin_user_id)
+            ON CONFLICT DO NOTHING
         ');
+        $stm->execute(['comment_id' => $commentId, 'admin_user_id' => $adminUserId]);
 
-        try {
-            return $stm->execute(['comment_id' => $commentId, 'admin_user_id' => $adminUserId]);
-        } catch (\PDOException) {
-            return false;
-        }
+        return $stm->rowCount() === 1;
     }
 }

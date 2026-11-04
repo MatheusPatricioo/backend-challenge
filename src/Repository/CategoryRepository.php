@@ -114,22 +114,23 @@ class CategoryRepository implements CategoryRepositoryInterface
         $stm = $this->pdo->prepare('
             INSERT INTO category_translation (category_id, lang_code, label)
             VALUES (:category_id, :lang_code, :label)
+            ON CONFLICT DO NOTHING
         ');
 
         $this->pdo->beginTransaction();
 
-        try {
-            foreach ($translations as $translation) {
-                $stm->execute([
-                    'category_id' => $categoryId,
-                    'lang_code' => $translation['lang_code'],
-                    'label' => $translation['label'],
-                ]);
-            }
-        } catch (\PDOException) {
-            $this->pdo->rollBack();
+        foreach ($translations as $translation) {
+            $stm->execute([
+                'category_id' => $categoryId,
+                'lang_code' => $translation['lang_code'],
+                'label' => $translation['label'],
+            ]);
 
-            return false;
+            if ($stm->rowCount() === 0) {
+                $this->pdo->rollBack();
+
+                return false;
+            }
         }
 
         return $this->pdo->commit();
