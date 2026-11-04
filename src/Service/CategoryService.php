@@ -8,10 +8,9 @@ use Contatoseguro\TesteBackend\Repository\Contracts\CategoryRepositoryInterface;
 class CategoryService
 {
     public function __construct(
-        private CategoryRepositoryInterface  $categoryRepository,
+        private CategoryRepositoryInterface $categoryRepository,
         private AdminUserRepositoryInterface $adminUserRepository
-    )
-    {
+    ) {
     }
 
     public function getAll($adminUserId, ?string $lang = null)

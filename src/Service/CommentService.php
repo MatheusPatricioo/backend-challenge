@@ -12,11 +12,10 @@ use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
 class CommentService
 {
     public function __construct(
-        private CommentRepositoryInterface   $commentRepository,
-        private ProductRepositoryInterface   $productRepository,
+        private CommentRepositoryInterface $commentRepository,
+        private ProductRepositoryInterface $productRepository,
         private AdminUserRepositoryInterface $adminUserRepository
-    )
-    {
+    ) {
     }
 
     public function getAll($adminUserId, int $productId): array

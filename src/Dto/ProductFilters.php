@@ -7,12 +7,11 @@ use Contatoseguro\TesteBackend\Exception\ValidationException;
 readonly class ProductFilters
 {
     public function __construct(
-        public ?int    $active = null,
-        public ?int    $categoryId = null,
+        public ?int $active = null,
+        public ?int $categoryId = null,
         public ?string $sort = null,
-        public ?int    $minStock = null,
-    )
-    {
+        public ?int $minStock = null,
+    ) {
     }
 
     public static function fromQueryParams(array $params): self

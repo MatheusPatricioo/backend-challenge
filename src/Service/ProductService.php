@@ -11,12 +11,11 @@ use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
 class ProductService
 {
     public function __construct(
-        private ProductRepositoryInterface    $productRepository,
+        private ProductRepositoryInterface $productRepository,
         private ProductLogRepositoryInterface $productLogRepository,
-        private CategoryRepositoryInterface   $categoryRepository,
-        private AdminUserRepositoryInterface  $adminUserRepository
-    )
-    {
+        private CategoryRepositoryInterface $categoryRepository,
+        private AdminUserRepositoryInterface $adminUserRepository
+    ) {
     }
 
     public function getAll($adminUserId, ProductFilters $filters = new ProductFilters(), ?string $lang = null): array
