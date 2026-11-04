@@ -428,3 +428,20 @@ O `ReportController` buscava os dados, montava as linhas do relatório e gerava 
 
 #### Tratamento de erros
 Os services lançam exceções com o nome da regra violada (`ValidationException`, `NotFoundException`, `ConflictException`), e um middleware (`ExceptionMiddleware`) as converte nas respostas `400`, `404` e `409`, com a mensagem em JSON (por exemplo, `{"message": "Comment not found."}`). Assim os controllers ficam apenas com o fluxo de sucesso, e a tradução de erros para HTTP fica em um único lugar. Exceções de outros tipos não são capturadas, para que erros inesperados não sejam mascarados.
+
+### Melhorias futuras
+
+Problemas do código original identificados durante o desenvolvimento que ficaram fora do escopo da entrega, por não fazerem parte das demandas ou por exigirem mudanças amplas. Todos foram reproduzidos na aplicação.
+
+**Segurança e regras de acesso**
+- As rotas de produto não verificam a empresa do usuário em todas as operações: `GET`, `PUT` e `DELETE /products/{id}` funcionam com produtos de outras empresas, e o `POST` e o `PUT` aceitam o `company_id` do body, o que permite cadastrar um produto em outra empresa. O ideal é usar sempre a empresa do usuário, como já é feito na listagem, nas categorias e nos comentários.
+
+**Comportamentos incorretos**
+- `DELETE /products/{id}` com um id inexistente retorna `200` e ainda grava um log de remoção.
+- `PUT /products/{id}` sobrescreve todas as categorias do produto com a categoria enviada (um produto em `furniture` e `house` passa a ter `clothing` duas vezes).
+- O cadastro de produto não usa transação: se o vínculo com a categoria falhar, o produto fica salvo sem categoria e sem log.
+- `GET /categories/{id}` retorna uma lista com um elemento, em vez do objeto da categoria.
+
+**Tratamento de erros**
+- Requisições sem o header `admin_user_id` ou com um usuário inexistente retornam `200` com avisos do PHP no corpo da resposta, seguidos de dados vazios, e `GET /products/{id}` com um id inexistente retorna `200` com avisos e um produto em branco. Além de esconder o erro, os avisos expõem caminhos internos do servidor (como `/var/www/html/src/...`). O caminho é lançar exceções para o `ExceptionMiddleware` converter em `401` ou `404`, como já é feito nas novas funcionalidades.
+- Os controllers originais de produtos e categorias definem o status com `if`, mas o `execute()` do PDO retorna `true` mesmo quando nenhuma linha é alterada, então o `404` nunca acontece. Eles podem passar a seguir o mesmo padrão de exceções.
