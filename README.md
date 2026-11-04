@@ -22,7 +22,7 @@ Existe uma seção ao fim do _README_ chamada **"Suas Respostas, Dúvidas e Obse
 ## Sobre a entrega
 >[!CAUTION]
 > A entrega deve ser realizada em um repositório **_PRIVADO_** do **GitHub**;
-> 
+>
 > Você deve adicionar os usuários [`pedrosobucki`](https://github.com/pedrosobucki) e [`aloefflerj`](https://github.com/aloefflerj) como colaboradores do repositório com permissão de leitura para que seu teste possa ser avaliado.
 
 - A primeira etapa é realizar um commit inicial com o código sem nenhuma modificação;
@@ -38,9 +38,9 @@ Existe uma seção ao fim do _README_ chamada **"Suas Respostas, Dúvidas e Obse
 
 ## Sobre a API
 As rotas estão divididas em:
-  - _CRUD_ de _categorias_;
-  - _CRUD_ de _produtos_;
-  - Rota de busca de um _relatório_ que retorna um _html_.
+- _CRUD_ de _categorias_;
+- _CRUD_ de _produtos_;
+- Rota de busca de um _relatório_ que retorna um _html_.
 
 Deve ser utilizado o [Postman](https://www.postman.com/) para desenvolvimento e documentação, o arquivo para importação das rotas se encontra em `docs/postman-api.json`.
 
@@ -48,8 +48,8 @@ Deve ser utilizado o [Postman](https://www.postman.com/) para desenvolvimento e 
 > É importante que se adicione o _header_ `admin_user_id` com o id do usuário desejado ao acessar as rotas para simular o uso de um usuário no sistema.
 
 A documentação da API se encontra na pasta `docs/api-docs.pdf`
-  - A documentação assume que a url base é `localhost:8000` mas você pode usar qualquer outra url ao configurar o servidor;
-  - O _header_ `admin_user_id` na documentação está indicado com valor `1` mas pode ser usado o id de qualquer outro usuário caso deseje (_pesquisando no banco de dados é possível ver os outros id's de usuários_).
+- A documentação assume que a url base é `localhost:8000` mas você pode usar qualquer outra url ao configurar o servidor;
+- O _header_ `admin_user_id` na documentação está indicado com valor `1` mas pode ser usado o id de qualquer outro usuário caso deseje (_pesquisando no banco de dados é possível ver os outros id's de usuários_).
 
 ## Sobre o Banco de Dados
 - O banco de dados é um _sqlite_ simples e já vem com dados preenchidos por padrão no projeto;
@@ -72,18 +72,18 @@ Abaixo, as solicitações do cliente:
 Modificações requisitadas pelo cliente em funcionalidades já existentes
 
 ### Categorias
-- [ ] A categoria está vindo errada na listagem de produtos para alguns casos (_exemplo: produto `blue trouser` está vindo na categoria `phone`_);
-- [ ] Alguns produtos estão vindo com a categoria `null` ao serem pesquisados individualmente (_exemplo: produto `iphone 8`_);
-- [ ] Cadastrei o produto `king size bed` em mais de uma categoria, mas ele aparece **apenas** na categoria `furniture` na busca individual do produto.
+- [x] A categoria está vindo errada na listagem de produtos para alguns casos (_exemplo: produto `blue trouser` está vindo na categoria `phone`_);
+- [x] Alguns produtos estão vindo com a categoria `null` ao serem pesquisados individualmente (_exemplo: produto `iphone 8`_);
+- [x] Cadastrei o produto `king size bed` em mais de uma categoria, mas ele aparece **apenas** na categoria `furniture` na busca individual do produto.
 
 ### Filtros e Ordenamento
 Para a listagem de produtos:
-- [ ] Gostaria de poder filtrar os produtos ativos ou inativos;
-- [ ] Gostaria de poder filtrar os produtos por categoria;
-- [ ] Gostaria de poder ordenar os produtos por data de cadastro.
+- [x] Gostaria de poder filtrar os produtos ativos ou inativos;
+- [x] Gostaria de poder filtrar os produtos por categoria;
+- [x] Gostaria de poder ordenar os produtos por data de cadastro.
 
 ### Relatório
-- [ ] O relatório não está mostrando a coluna de logs corretamente, se possível, gostaria de trazer no seguinte formato:
+- [x] O relatório não está mostrando a coluna de logs corretamente, se possível, gostaria de trazer no seguinte formato:
   (Nome do usuário, Tipo de alteração e Data),
   (Nome do usuário, Tipo de alteração e Data),
   (Nome do usuário, Tipo de alteração e Data)
@@ -93,10 +93,10 @@ Para a listagem de produtos:
   (Joe Doe, Remoção, 21/12/2023 14:52:50)
 
 ### Logs
-- [ ] Gostaria de saber qual usuário mudou o preço do produto `iphone 8` por último.
+- [x] Gostaria de saber qual usuário mudou o preço do produto `iphone 8` por último.
 
 ### Correção de bug
-- [ ] Ao rodar os teste unitários com `composer test` são apontados erros. Eles precisam ser resolvidos, com documentação sobre a causa e a solução.
+- [x] Ao rodar os teste unitários com `composer test` são apontados erros. Eles precisam ser resolvidos, com documentação sobre a causa e a solução.
 
 ## Features
 Novas funcionalidades requisitadas pelo cliente
@@ -105,7 +105,7 @@ Novas funcionalidades requisitadas pelo cliente
 > Preste atenção, funcionalidades que exijam mudanças no banco de dados devem conter tais modificações em uma ou mais **migrations**.
 
 ### Traduções
-- [ ] Quero disponibilizar meu sistema para fora do país, crie uma funcionalidade de cadastro de traduções para as categorias que segue o seguinte contrato:
+- [x] Quero disponibilizar meu sistema para fora do país, crie uma funcionalidade de cadastro de traduções para as categorias que segue o seguinte contrato:
 ```
 POST "$base_url/categories/:id"
 
@@ -122,26 +122,26 @@ POST "$base_url/categories/:id"
   ]
 }
 ```
-- [ ] Não deve ser possível cadastrar traduções repetidas, se uma única tradução repetida foi enviada, nenhuma deve persistir;
-- [ ] Ao buscar por produtos/categorias, o parâmetro adicional opcional "_`lang`_" pode ser passado para determinar a linguagem em que a categoria deve ser retornada;
-- [ ] Caso não haja categoria correspondente ou não seja especificado por parâmetro, retornar em inglês;
-- [ ] Inclua a rota e as modificações na coleção do Postman no repositório.
+- [x] Não deve ser possível cadastrar traduções repetidas, se uma única tradução repetida foi enviada, nenhuma deve persistir;
+- [x] Ao buscar por produtos/categorias, o parâmetro adicional opcional "_`lang`_" pode ser passado para determinar a linguagem em que a categoria deve ser retornada;
+- [x] Caso não haja categoria correspondente ou não seja especificado por parâmetro, retornar em inglês;
+- [x] Inclua a rota e as modificações na coleção do Postman no repositório.
 
 ### Estoque
 Além das informações já disponíveis do produto, desejo acrescentar também uma contagem de estoque para cada, a qual deve seguir algumas regras:
-- [ ] Posso cadastrar a quantidade do estoque assim que cadastro um produto, mas se não for informado assumo que o estoque é _0_;
-- [ ] Posso atualizar o estoque de um produto;
-- [ ] Ao buscar um produto, posso filtrar por uma quantidade mínima em estoque.
+- [x] Posso cadastrar a quantidade do estoque assim que cadastro um produto, mas se não for informado assumo que o estoque é _0_;
+- [x] Posso atualizar o estoque de um produto;
+- [x] Ao buscar um produto, posso filtrar por uma quantidade mínima em estoque.
 
 ### Comentários
 Quero que os usuários do sistema possam discutir sobre os produtos em uma área de comentários.
 
 Para isso, novas rotas devem ser criadas:
-- [ ] Criar um novo comentário no produto
-- [ ] Responder um comentário já realizado (todo comentário pode ser diretamente respondido)
-- [ ] Remover um comentário feito por mim
-- [ ] Curtir um comentário
-- [ ] Listar todos os comentários de um produto em um objeto com hierarquia de comentários
+- [x] Criar um novo comentário no produto
+- [x] Responder um comentário já realizado (todo comentário pode ser diretamente respondido)
+- [x] Remover um comentário feito por mim
+- [x] Curtir um comentário
+- [x] Listar todos os comentários de um produto em um objeto com hierarquia de comentários
 
 ##
 **Seu trabalho é atender às demandas solicitadas pelo cliente.**
@@ -159,20 +159,20 @@ Para efetuar a criação do ambiente docker, partimos de algumas premissas:
 - A funcionalidade de **PHP** deve rodar na porta **8000** do host.
 
 ### Itens obrigatórios
-- [ ] Criar um ambiente docker que sobe a aplicação **PHP** na porta **8000**;
-- [ ] Possibilitar que as **_migrations_ possam ser executadas/criadas por docker** (especificar comando);
-- [ ] Possibilitar que os **_testes unitários_ sejam executados por docker** (especificar comando).
+- [x] Criar um ambiente docker que sobe a aplicação **PHP** na porta **8000**;
+- [x] Possibilitar que as **_migrations_ possam ser executadas/criadas por docker** (especificar comando);
+- [x] Possibilitar que os **_testes unitários_ sejam executados por docker** (especificar comando).
 
 ### Desafios
 - [ ] Substituir o banco serverless **SQLite** por um banco como **MySQL**/**PostgreSQL**/outro e servir por container;
-- [ ] Escrever **novos testes unitários** para funcionalidades faltantes;
-- [ ] Implementar um **Linter** e disponibilizar por docker (especificar comando);
-- [ ] Implementar **análise estática** e disponibilizar por docker (especificar comando);
-- [ ] Escrever um script "_`check_deploy.sh`_" que faz todas as validações implementadas como uma pipeline e determina se o código está pronto para produção.
+- [x] Escrever **novos testes unitários** para funcionalidades faltantes;
+- [x] Implementar um **Linter** e disponibilizar por docker (especificar comando);
+- [x] Implementar **análise estática** e disponibilizar por docker (especificar comando);
+- [x] Escrever um script "_`check_deploy.sh`_" que faz todas as validações implementadas como uma pipeline e determina se o código está pronto para produção.
 
 ## Suas Respostas, Dúvidas e Observações
 
-As seções seguem a ordem do enunciado: primeiro o ambiente e os testes, depois as demandas do cliente, os problemas que encontrei durante o desenvolvimento e, por fim, a refatoração. Nas causas dos bugs, os métodos citados são os do código original; depois, o acesso ao banco foi movido para repositories.
+As seções seguem a ordem do enunciado: primeiro o ambiente e os testes, depois as demandas do cliente (alterações e features), os problemas que encontrei durante o desenvolvimento, a refatoração e, por fim, as melhorias futuras. Nas causas dos bugs, os métodos citados são os do código original; depois, o acesso ao banco foi movido para repositories.
 
 ### Ambiente
 
@@ -203,10 +203,12 @@ Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.s
 A coleção em `docs/postman-api.json` não funcionava ao ser importada: as variáveis usavam a sintaxe do Insomnia (`{{ _.base_url }}`) em vez da do Postman (`{{base_url}}`), e as URLs terminavam com `/`, o que não corresponde às rotas do Slim nem à documentação em `docs/api-docs.pdf`. Corrigi as duas coisas.
 
 A coleção também foi atualizada com as novas funcionalidades: a rota de cadastro de traduções (`categories → insertTranslations`), os parâmetros de filtro, ordenação e idioma (incluídos desmarcados nas requisições de busca, com descrição), o campo `stock` no cadastro e na edição de produtos, e a pasta `comments`, com as requisições na ordem de uma conversa de exemplo.
+
 ### Testes
 Além dos testes unitários existentes, adicionei testes de feature (`tests/Feature`), que fazem requisições à aplicação e validam a resposta.
 - Cada teste roda em uma cópia temporária de `db/db-backup.sqlite3`, com as migrations aplicadas, então o banco real nunca é alterado e os testes usam a mesma estrutura de banco da aplicação. Para isso, o caminho do banco passou a aceitar a variável de ambiente `DB_PATH`, e a montagem da aplicação foi extraída de `public/index.php` para `src/Config/app.php`, para ser reutilizada pelos testes.
 - Os dados de cada teste são criados por factories (`tests/Factories`), que definem valores padrão para cada tabela e permitem sobrescrever apenas os campos relevantes para o cenário, por exemplo `ProductFactory::create(['active' => 0])`.
+- Os testes unitários (`tests/Unit/Service`) cobrem as regras de negócio do `CommentService` (hierarquia das respostas, comentário vazio, produto de outra empresa, resposta a comentário de outro produto, remoção de comentário inexistente e curtida repetida) e do `CategoryService` (traduções de categoria inexistente e tradução repetida), com caminhos felizes e tristes. Os repositories são substituídos por implementações falsas das suas interfaces, então esses testes não acessam o banco. Os services que apenas repassam chamadas ao repository são cobertos pelos testes de feature.
 
 ### Alterações
 
@@ -260,11 +262,6 @@ Exemplo: `GET /products?active=1&category_id=4&sort=-created_at`. Sem parâmetro
 - **Solução:** os logs passaram a ser exibidos no formato pedido, `(Nome do usuário, Tipo de alteração, Data)`, um por linha e em ordem cronológica. As ações são traduzidas (`create` → Criação, `update` → Atualização, `delete` → Remoção) e a data é exibida em `dd/mm/aaaa hh:mm:ss`. Coberto por testes de feature.
 - **Decisão:** logs de usuários inexistentes (como o usuário 6, presente nos dados) aparecem como `Usuário desconhecido`, em vez de sumirem do relatório.
 
-**N+1 no relatório**
-- **Problema:** o relatório fazia duas consultas para cada produto (o nome da empresa e os logs), ou seja, 39 consultas para os 18 produtos do banco, número que crescia a cada produto cadastrado.
-- **Causa:** as consultas eram feitas dentro do laço que monta as linhas.
-- **Solução:** o nome da empresa passou a ser buscado uma única vez (todos os produtos do relatório são da empresa do usuário), e os logs de todos os produtos passaram a vir em uma única consulta (`WHERE product_id IN (...)`), agrupados por produto. O relatório passou a usar 6 consultas, independentemente da quantidade de produtos. O conteúdo gerado não mudou, o que é garantido pelos testes de feature do relatório.
-
 #### Logs
 
 **Quem alterou o preço do `iphone 8` por último?**
@@ -286,8 +283,8 @@ Observação: o histórico do produto contém dois registros de criação no mes
 #### Correção de bug
 
 Ao rodar `composer test` foram apontados dois problemas:
-- **Aviso de `Deprecated` do PHPUnit:** ...
-- **Teste `Hydrate by fetch` falhando:** ... Troquei o cast para `(float)`.
+- **Aviso de `Deprecated` do PHPUnit:** o `composer.json` fixava a versão `9.5` (9.5.0), lançada antes do PHP 8.1 e incompatível com ele. Atualizei para `^9.6`, uma atualização minor, sem impacto nos testes existentes.
+- **Teste `Hydrate by fetch` falhando:** o `Product::hydrateByFetch()` convertia o preço com `(int)`, descartando os centavos (99.99 virava 99). O teste estava correto e o erro era no código, que afetava também a API (`GET /products/{id}` retornava o preço truncado). Troquei o cast para `(float)`.
 
 ### Features
 
@@ -416,6 +413,11 @@ Bugs que não foram apontados pelo cliente, mas que encontrei durante o desenvol
 - **Causa:** a tabela concatenava os valores diretamente nas células.
 - **Solução:** todas as células passaram a ser escapadas com `htmlspecialchars()` na `HtmlTable`, que concentra a geração do HTML. Coberto por teste de feature.
 
+**N+1 no relatório**
+- **Problema:** o relatório fazia duas consultas para cada produto (o nome da empresa e os logs), ou seja, 39 consultas para os 18 produtos do banco, número que crescia a cada produto cadastrado.
+- **Causa:** as consultas eram feitas dentro do laço que monta as linhas.
+- **Solução:** o nome da empresa passou a ser buscado uma única vez (todos os produtos do relatório são da empresa do usuário), e os logs de todos os produtos passaram a vir em uma única consulta (`WHERE product_id IN (...)`), agrupados por produto. O relatório passou a usar 6 consultas, independentemente da quantidade de produtos. O conteúdo gerado não mudou, o que é garantido pelos testes de feature do relatório.
+
 ### Refatoração
 Tratei o projeto como um sistema legado: em vez de reescrever tudo, refatorei de forma incremental apenas o que trazia ganho concreto, sempre protegido pelos testes de feature, que passaram sem nenhuma alteração após cada etapa.
 
@@ -458,3 +460,6 @@ Problemas do código original identificados durante o desenvolvimento que ficara
 **Tratamento de erros**
 - Requisições sem o header `admin_user_id` ou com um usuário inexistente retornam `200` com avisos do PHP no corpo da resposta, seguidos de dados vazios, e `GET /products/{id}` com um id inexistente retorna `200` com avisos e um produto em branco. Além de esconder o erro, os avisos expõem caminhos internos do servidor (como `/var/www/html/src/...`). O caminho é lançar exceções para o `ExceptionMiddleware` converter em `401` ou `404`, como já é feito nas novas funcionalidades.
 - Os controllers originais de produtos e categorias definem o status com `if`, mas o `execute()` do PDO retorna `true` mesmo quando nenhuma linha é alterada, então o `404` nunca acontece. Eles podem passar a seguir o mesmo padrão de exceções.
+
+**Desafios não implementados**
+- Banco MySQL ou PostgreSQL em container.
