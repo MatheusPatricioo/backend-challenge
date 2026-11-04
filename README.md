@@ -247,6 +247,11 @@ Exemplo: `GET /products?active=1&category_id=4&sort=-created_at`. Sem parâmetro
 - **Solução:** os logs passaram a ser exibidos no formato pedido, `(Nome do usuário, Tipo de alteração, Data)`, um por linha e em ordem cronológica. As ações são traduzidas (`create` → Criação, `update` → Atualização, `delete` → Remoção) e a data é exibida em `dd/mm/aaaa hh:mm:ss`. Coberto por testes de feature.
 - **Decisão:** logs de usuários inexistentes (como o usuário 6, presente nos dados) aparecem como `Usuário desconhecido`, em vez de sumirem do relatório.
 
+**N+1 no relatório**
+- **Problema:** o relatório fazia duas consultas para cada produto (o nome da empresa e os logs), ou seja, 39 consultas para os 18 produtos do banco, número que crescia a cada produto cadastrado.
+- **Causa:** as consultas eram feitas dentro do laço que monta as linhas.
+- **Solução:** o nome da empresa passou a ser buscado uma única vez (todos os produtos do relatório são da empresa do usuário), e os logs de todos os produtos passaram a vir em uma única consulta (`WHERE product_id IN (...)`), agrupados por produto. O relatório passou a usar 6 consultas, independentemente da quantidade de produtos. O conteúdo gerado não mudou, o que é garantido pelos testes de feature do relatório.
+
 #### Logs
 
 **Quem alterou o preço do `iphone 8` por último?**

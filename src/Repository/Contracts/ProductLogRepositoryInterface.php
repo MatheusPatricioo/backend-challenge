@@ -6,5 +6,5 @@ interface ProductLogRepositoryInterface
 {
     public function insertOne($productId, $adminUserId, $action);
 
-    public function getByProductId($productId): array;
+    public function getByProductIds(array $productIds): array;
 }

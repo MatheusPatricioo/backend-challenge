@@ -30,7 +30,8 @@ class ReportController
                 new CategoryRepository($pdo),
                 new AdminUserRepository($pdo)
             ),
-            new CompanyService(new CompanyRepository($pdo))
+            new CompanyService(new CompanyRepository($pdo)),
+            new AdminUserRepository($pdo)
         );
     }
 

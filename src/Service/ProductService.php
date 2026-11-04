@@ -62,8 +62,8 @@ class ProductService
         return $this->productLogRepository->insertOne($id, $adminUserId, 'delete');
     }
 
-    public function getLog($id): array
+    public function getLogs(array $productIds): array
     {
-        return $this->productLogRepository->getByProductId($id);
+        return $this->productLogRepository->getByProductIds($productIds);
     }
 }

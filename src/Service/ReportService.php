@@ -1,6 +1,7 @@
 <?php
 
 namespace Contatoseguro\TesteBackend\Service;
+use Contatoseguro\TesteBackend\Repository\Contracts\AdminUserRepositoryInterface;
 
 class ReportService
 {
@@ -12,7 +13,8 @@ class ReportService
 
     public function __construct(
         private ProductService $productService,
-        private CompanyService $companyService
+        private CompanyService $companyService,
+        private AdminUserRepositoryInterface $adminUserRepository
     ) {
     }
 
@@ -30,19 +32,17 @@ class ReportService
         ];
 
         $products = $this->productService->getAll($adminUserId);
+        $companyName = $this->companyService->getOne($this->adminUserRepository->getCompanyId($adminUserId))->name;
+        $logsByProduct = $this->productService->getLogs(array_column($products, 'id'));
 
         foreach ($products as $i => $product) {
-            $companyName = $this->companyService->getOne($product->company_id)->name;
-
-            $productLogs = $this->productService->getLog($product->id);
-
             $data[$i+1][] = $product->id;
             $data[$i+1][] = $companyName;
             $data[$i+1][] = $product->title;
             $data[$i+1][] = $product->price;
             $data[$i+1][] = implode(', ', array_column($product->categories, 'title'));
             $data[$i+1][] = $product->created_at;
-            $data[$i+1][] = $this->formatLogs($productLogs);
+            $data[$i+1][] = $this->formatLogs($logsByProduct[$product->id] ?? []);
         }
 
         return $data;

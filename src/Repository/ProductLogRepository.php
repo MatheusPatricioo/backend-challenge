@@ -20,17 +20,28 @@ class ProductLogRepository implements ProductLogRepositoryInterface
         return $stm->execute(['product_id' => $productId, 'admin_user_id' => $adminUserId, 'action' => $action]);
     }
 
-    public function getByProductId($productId): array
+    public function getByProductIds(array $productIds): array
     {
-        $stm = $this->pdo->prepare('
-    SELECT pl.*, au.name AS admin_user_name
-    FROM product_log pl
-    LEFT JOIN admin_user au ON au.id = pl.admin_user_id
-    WHERE pl.product_id = :product_id
-    ORDER BY pl.timestamp, pl.id
-    ');
-        $stm->execute(['product_id' => $productId]);
+        if ($productIds === []) {
+            return [];
+        }
 
-        return $stm->fetchAll();
+        $placeholders = implode(', ', array_fill(0, count($productIds), '?'));
+
+        $stm = $this->pdo->prepare("
+            SELECT pl.*, au.name AS admin_user_name
+            FROM product_log pl
+            LEFT JOIN admin_user au ON au.id = pl.admin_user_id
+            WHERE pl.product_id IN ({$placeholders})
+            ORDER BY pl.timestamp, pl.id
+        ");
+        $stm->execute(array_values($productIds));
+
+        $logsByProduct = [];
+        foreach ($stm->fetchAll() as $log) {
+            $logsByProduct[$log->product_id][] = $log;
+        }
+
+        return $logsByProduct;
     }
 }
