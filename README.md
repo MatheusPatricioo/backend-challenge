@@ -185,6 +185,7 @@ docker compose exec app composer create-migration NomeDaMigration  # cria uma mi
 docker compose exec -e XDEBUG_TRIGGER=1 app vendor/bin/phpunit     # roda os testes com o Xdebug ativo
 docker compose exec app composer lint                              # verifica o padrão de código (PSR-12)
 docker compose exec app composer lint:fix                          # corrige automaticamente o que for possível
+docker compose exec app composer analyse                           # análise estática (PHPStan, nível 5)
 ```
 Caso `db/db.sqlite3` não exista, o container o cria a partir de `db/db-backup.sqlite3`. Depois de subir o container, rode as migrations para aplicar as mudanças de banco das novas funcionalidades. O comando de reverter migrations no `composer.json` se chama `rollback-migration`, e não `rollback` como indicado no enunciado.
 
