@@ -4,6 +4,7 @@ namespace Contatoseguro\TesteBackend\Service;
 
 use Contatoseguro\TesteBackend\Exception\ConflictException;
 use Contatoseguro\TesteBackend\Exception\NotFoundException;
+use Contatoseguro\TesteBackend\Exception\ValidationException;
 use Contatoseguro\TesteBackend\Repository\Contracts\AdminUserRepositoryInterface;
 use Contatoseguro\TesteBackend\Repository\Contracts\CommentRepositoryInterface;
 use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
@@ -11,10 +12,11 @@ use Contatoseguro\TesteBackend\Repository\Contracts\ProductRepositoryInterface;
 class CommentService
 {
     public function __construct(
-        private CommentRepositoryInterface $commentRepository,
-        private ProductRepositoryInterface $productRepository,
+        private CommentRepositoryInterface   $commentRepository,
+        private ProductRepositoryInterface   $productRepository,
         private AdminUserRepositoryInterface $adminUserRepository
-    ) {
+    )
+    {
     }
 
     public function getAll($adminUserId, int $productId): array
@@ -24,8 +26,12 @@ class CommentService
         return $this->buildHierarchy($this->commentRepository->getByProductId($productId));
     }
 
-    public function insertOne($adminUserId, int $productId, string $content, ?int $parentId): int
+    public function insertOne($adminUserId, int $productId, ?string $content, ?int $parentId): int
     {
+        if (trim((string) $content) === '') {
+            throw new ValidationException('Content is required.');
+        }
+
         $this->ensureProductBelongsToUser($adminUserId, $productId);
 
         if ($parentId !== null) {
@@ -77,7 +83,7 @@ class CommentService
 
     private function buildHierarchy(array $allComments, ?int $parentId = null): array
     {
-        $comments = array_values(array_filter($allComments, fn ($comment) => $comment->parent_id === $parentId));
+        $comments = array_values(array_filter($allComments, fn($comment) => $comment->parent_id === $parentId));
 
         foreach ($comments as $comment) {
             $comment->replies = $this->buildHierarchy($allComments, $comment->id);

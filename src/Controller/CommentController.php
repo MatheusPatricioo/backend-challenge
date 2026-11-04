@@ -40,7 +40,7 @@ class CommentController
         $adminUserId = $request->getHeader('admin_user_id')[0];
         $body = $request->getParsedBody();
 
-        $commentId = $this->service->insertOne($adminUserId, (int) $args['id'], $body['content'], $body['parent_id'] ?? null);
+        $commentId = $this->service->insertOne($adminUserId, (int) $args['id'], $body['content'] ?? null, $body['parent_id'] ?? null);
 
         $response->getBody()->write(json_encode(['id' => $commentId]));
         return $response->withStatus(201);

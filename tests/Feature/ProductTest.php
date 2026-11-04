@@ -186,6 +186,18 @@ class ProductTest extends FeatureTestCase
         $this->assertSame(5, $stocks[$productId]);
     }
 
+    public function testListingProductsWithAnInvalidFilterReturnsBadRequest(): void
+    {
+        $request = (new ServerRequestFactory())
+            ->createServerRequest('GET', '/products')
+            ->withHeader('admin_user_id', '1')
+            ->withQueryParams(['active' => 'abc']);
+
+        $response = $this->app->handle($request);
+
+        $this->assertSame(400, $response->getStatusCode());
+    }
+
     private function listProducts(int $adminUserId = 1, array $query = []): array
     {
         $request = (new ServerRequestFactory())

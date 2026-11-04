@@ -87,6 +87,16 @@ class CommentTest extends FeatureTestCase
         $this->assertSame(404, $response->getStatusCode());
     }
 
+    public function testCommentingWithoutContentReturnsBadRequest(): void
+    {
+        $productId = ProductFactory::create();
+
+        $response = $this->postComment($productId, []);
+
+        $this->assertSame(400, $response->getStatusCode());
+        $this->assertSame([], $this->commentsOf($productId));
+    }
+
     private function postComment(int $productId, array $body): ResponseInterface
     {
         $request = (new ServerRequestFactory())

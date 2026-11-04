@@ -4,6 +4,7 @@ namespace Contatoseguro\TesteBackend\Middleware;
 
 use Contatoseguro\TesteBackend\Exception\ConflictException;
 use Contatoseguro\TesteBackend\Exception\NotFoundException;
+use Contatoseguro\TesteBackend\Exception\ValidationException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
@@ -15,6 +16,8 @@ class ExceptionMiddleware
     {
         try {
             return $handler->handle($request);
+        } catch (ValidationException $exception) {
+            return $this->errorResponse(400, $exception->getMessage());
         } catch (NotFoundException $exception) {
             return $this->errorResponse(404, $exception->getMessage());
         } catch (ConflictException $exception) {

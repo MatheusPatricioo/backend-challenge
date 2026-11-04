@@ -2,23 +2,41 @@
 
 namespace Contatoseguro\TesteBackend\Dto;
 
+use Contatoseguro\TesteBackend\Exception\ValidationException;
+
 readonly class ProductFilters
 {
     public function __construct(
         public ?int    $active = null,
         public ?int    $categoryId = null,
         public ?string $sort = null,
-        public ?int $minStock = null,
-    ) {
+        public ?int    $minStock = null,
+    )
+    {
     }
 
     public static function fromQueryParams(array $params): self
     {
         return new self(
-            active: isset($params['active']) ? (int) filter_var($params['active'], FILTER_VALIDATE_BOOLEAN) : null,
-            categoryId: isset($params['category_id']) ? (int) $params['category_id'] : null,
+            active: self::parse($params, 'active', FILTER_VALIDATE_BOOLEAN),
+            categoryId: self::parse($params, 'category_id', FILTER_VALIDATE_INT),
             sort: $params['sort'] ?? null,
-            minStock: isset($params['min_stock']) ? (int) $params['min_stock'] : null,
+            minStock: self::parse($params, 'min_stock', FILTER_VALIDATE_INT),
         );
+    }
+
+    private static function parse(array $params, string $key, int $filter): ?int
+    {
+        if (!isset($params[$key])) {
+            return null;
+        }
+
+        $value = filter_var($params[$key], $filter, FILTER_NULL_ON_FAILURE);
+
+        if ($value === null) {
+            throw new ValidationException("Invalid value for {$key}.");
+        }
+
+        return (int)$value;
     }
 }

@@ -236,7 +236,7 @@ Exemplo: `GET /products?active=1&category_id=4&sort=-created_at`. Sem parâmetro
 
 - Os parâmetros são convertidos no controller em um DTO tipado (`ProductFilters`), para que service e repository não dependam do formato da requisição HTTP.
 - A filtragem é feita na própria consulta SQL. O filtro por categoria usa uma subconsulta, para não duplicar produtos e manter todas as categorias de cada produto na resposta.
-- A ordenação aceita apenas os valores acima; qualquer outro mantém a ordem padrão. Como o `ORDER BY` não aceita parâmetros do prepared statement, ele nunca é montado com texto vindo do usuário.
+- A ordenação aceita apenas os valores acima; qualquer outro mantém a ordem padrão. Como o `ORDER BY` não aceita parâmetros do prepared statement, ele nunca é montado com texto vindo do usuário. Valores inválidos em `active`, `category_id` ou `min_stock` retornam `400 Bad Request`.
 - Coberto por testes de feature.
 
 #### Relatório
@@ -333,6 +333,7 @@ Migration `CreateProductComments`: cria as tabelas `product_comment` (comentári
 | Comentário criado | `201 Created`, com o `id` do comentário |
 | Produto inexistente ou de outra empresa | `404 Not Found` |
 | `parent_id` inexistente ou de outro produto | `404 Not Found` |
+| `content` ausente ou vazio | `400 Bad Request` |
 
 - Coberto por testes de feature.
 
@@ -426,4 +427,4 @@ Repositories criados:
 O `ReportController` buscava os dados, montava as linhas do relatório e gerava o HTML. Separei essas responsabilidades seguindo o padrão Controller → Service que o projeto já usa: o `ReportService` monta os dados e a `HtmlTable` (`src/View`) gera o HTML, deixando o controller apenas com a requisição e a resposta.
 
 #### Tratamento de erros
-Os services lançam exceções com o nome da regra violada (`NotFoundException`, `ConflictException`), e um middleware (`ExceptionMiddleware`) as converte nas respostas `404` e `409`, com a mensagem em JSON (por exemplo, `{"message": "Comment not found."}`). Assim os controllers ficam apenas com o fluxo de sucesso, e a tradução de erros para HTTP fica em um único lugar. Exceções de outros tipos não são capturadas, para que erros inesperados não sejam mascarados.
+Os services lançam exceções com o nome da regra violada (`ValidationException`, `NotFoundException`, `ConflictException`), e um middleware (`ExceptionMiddleware`) as converte nas respostas `400`, `404` e `409`, com a mensagem em JSON (por exemplo, `{"message": "Comment not found."}`). Assim os controllers ficam apenas com o fluxo de sucesso, e a tradução de erros para HTTP fica em um único lugar. Exceções de outros tipos não são capturadas, para que erros inesperados não sejam mascarados.
